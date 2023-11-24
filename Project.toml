@@ -1,0 +1,13 @@
+name = "ACDC_OPF_Belgium"
+uuid = "649cc5e6-8c8e-4ba6-9842-8209e2f7e793"
+authors = ["Giacomo Bastianel", "KU Leuven"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
