@@ -1,46 +1,33 @@
-# Solving OPF for Belgium without energy island for now
-## Calling packages
-using Ipopt
 using PowerModels; const _PM = PowerModels
-using JuMP
 using PowerModelsACDC; const _PMACDC = PowerModelsACDC
+using ACDC_OPF_Belgium
 using Gurobi
-using Feather
-using CSV
-using DataFrames; const _DF = DataFrames
-using JSON
-#using PowerModelsAnalytics
-import ExcelFiles; const _EF = ExcelFiles
-using PowerPlots
-using Plots
-using DataFrames
-using XLSX
+using JuMP
 
+gurobi = JuMP.optimizer_with_attributes(Gurobi.Optimizer)
 
-##################################################################
-## Including other files to call the needed functions
-include("load_data.jl")
-include("build_grid_data.jl")
-include("get_grid_data.jl")
-#include("process_results.jl")
 ##################################################################
 ## Processing input data
 folder_results = @__DIR__
 
 # Belgium grid without energy island
-BE_grid_file = joinpath(folder_results,"Belgian_transmission_grid_data_Elia_2023.json")
+BE_grid_file = joinpath(folder_results,"test_cases/Belgian_transmission_grid_data_Elia_2023.json")
 BE_grid = _PM.parse_file(BE_grid_file)
 #_PMACDC.process_additional_data!(BE_grid)
 
 # North sea grid backbone -> to be adjusted later
-North_sea_grid_file = joinpath(folder_results,"North_Sea_zonal_model_with_generators.m")
+North_sea_grid_file = joinpath(folder_results,"test_cases/North_Sea_zonal_model_with_generators.m")
 North_sea_grid = _PM.parse_file(North_sea_grid_file)
 _PMACDC.process_additional_data!(North_sea_grid)
 
 # Example of a PowerModels.jl dictionary
-example_dc_grid_file = "/Users/giacomobastianel/.julia/packages/PowerModelsACDC/mpvnc/test/data/case5_acdc.m"
+example_dc_grid_file = joinpath(folder_results,"test_cases/case5_acdc.m")
 example_dc_grid = _PM.parse_file(example_dc_grid_file)
 _PMACDC.process_additional_data!(example_dc_grid)
+
+# Testing the OPF
+s = Dict("output" => Dict("branch_flows" => true), "conv_losses_mp" => true)
+result = _PMACDC.run_acdcopf(BE_grid,DCPPowerModel,gurobi; setting = s)
 
 ##################################################################
 ## Choosing the number of hours, scenario and climate year
@@ -50,7 +37,7 @@ year = "1984"
 year_int = parse(Int64,year)
 
 ##################################################################
-## Processing time series
+## Processing time series -> this needs to be fixed for Github!
 # Creating RES time series for Belgium from Feather files in tyndpdata desktop folder
 pv, wind_onshore, wind_offshore = load_res_data()
 wind_onshore_BE, wind_offshore_BE, solar_pv_BE = make_res_time_series(wind_onshore, wind_offshore, pv, "BE00",year_int)
