@@ -208,6 +208,7 @@ function creating_gen_list(dict)
         dict["$i"]["pmax"] = Pmax[i]/100#./dict["$i"]["mbase"]
         dict["$i"]["pmin"] = 0.0#./dict["$i"]["mbase"]
         dict["$i"]["source_id"][2] = i
+        dict["$i"]["index"] = i
         owner_gen = deepcopy(owner[i])
         dict["$i"]["owner"] = "$owner_gen"
         power_plant_name_gen = deepcopy(power_plant_name[i])
@@ -266,6 +267,7 @@ function adding_onshore_wind_and_solar_pv_list(dict)
         dict["$i"]["name"] = "solar_PV_"*"$i"
         dict["$i"]["fuel_type"] = "Solar_PV"
         dict["$i"]["gen_type"] = "PV"
+        dict["$i"]["index"] = i
         dict["$i"]["substation_short_name_kV"] = rand(unique_substations_no_interconnections)
         dict["$i"]["qmax"] = deepcopy(dict["$i"]["pmax"]/2)
         dict["$i"]["qmin"] = deepcopy(dict["$i"]["pmax"]/2)*(-1)
@@ -284,6 +286,7 @@ function adding_onshore_wind_and_solar_pv_list(dict)
         dict["$i"]["name"] = "Wind_onshore_"*"$i"
         dict["$i"]["fuel_type"] = "Wind_onshore"
         dict["$i"]["gen_type"] = "WON"
+        dict["$i"]["index"] = i
         dict["$i"]["substation_short_name_kV"] = rand(unique_substations_no_interconnections)
         dict["$i"]["qmax"] = deepcopy(dict["$i"]["pmax"]/2)
         dict["$i"]["qmin"] = deepcopy(dict["$i"]["pmax"]/2)*(-1)
