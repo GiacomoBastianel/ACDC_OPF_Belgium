@@ -1196,7 +1196,6 @@ end
 
 
 function add_energy_island(grid)
-
     # 132 buses before the energy island
     # Add Energy island #1 AC bus
     grid["bus"]["133"] = deepcopy(grid["bus"]["2"])
@@ -1263,11 +1262,11 @@ function add_energy_island(grid)
     grid["gen"]["502"] = deepcopy(grid["gen"]["60"])
     grid["gen"]["502"]["source_id"][2] = 502
     grid["gen"]["502"]["index"] = 502
-    grid["gen"]["502"]["pmax"] = 21.0
-    grid["gen"]["502"]["qmax"] = 3.0
-    grid["gen"]["502"]["qmin"] = - 3.0
-    grid["gen"]["502"]["pd"] = 1.05
-    grid["gen"]["502"]["installed_capacity"] = 99.0
+    #grid["gen"]["502"]["pmax"] = 21.0
+    #grid["gen"]["502"]["qmax"] = 3.0
+    #grid["gen"]["502"]["qmin"] = - 3.0
+    #grid["gen"]["502"]["pd"] = 1.05
+    #grid["gen"]["502"]["installed_capacity"] = 99.0
     grid["gen"]["502"]["mbase"] = 100.0
     grid["gen"]["502"]["substation_short_name"] = "EI_AC_1"
     grid["gen"]["502"]["substation_short_name_kV"] = "EI_AC_1_220"
@@ -1275,25 +1274,25 @@ function add_energy_island(grid)
     grid["gen"]["502"]["substation_full_name_kV"] = "EI_AC_1_220"
     grid["gen"]["502"]["substation"] = "EI_AC_1_220"
     grid["gen"]["502"]["name"] = "OFW_EI_AC"
-    grid["gen"]["502"]["gen_bus"] = 26
+    grid["gen"]["502"]["gen_bus"] = 133
     grid["gen"]["502"]["zone"] = "BE00"
 
     grid["gen"]["503"] = deepcopy(grid["gen"]["60"])
     grid["gen"]["503"]["source_id"][2] = 503
     grid["gen"]["503"]["index"] = 503
-    grid["gen"]["503"]["pmax"] = 14.0
-    grid["gen"]["503"]["qmax"] = 3.0
-    grid["gen"]["503"]["qmin"] = - 3.0
-    grid["gen"]["503"]["pd"] = 1.05
-    grid["gen"]["503"]["installed_capacity"] = 99.0
+    #grid["gen"]["503"]["pmax"] = 14.0
+    #grid["gen"]["503"]["qmax"] = 3.0
+    #grid["gen"]["503"]["qmin"] = - 3.0
+    #grid["gen"]["503"]["pd"] = 1.05
+    #grid["gen"]["503"]["installed_capacity"] = 99.0
     grid["gen"]["503"]["mbase"] = 100.0
     grid["gen"]["503"]["substation_short_name"] = "EI_AC_2"
     grid["gen"]["503"]["substation_short_name_kV"] = "EI_AC_2_220"
     grid["gen"]["503"]["substation_full_name"] = "EI_AC_2"
     grid["gen"]["503"]["substation_full_name_kV"] = "EI_AC_2_220"
-    grid["gen"]["503"]["substation"] = "BE0"
+    grid["gen"]["503"]["substation"] = "EI_AC_2_220"
     grid["gen"]["503"]["name"] = "OFW_EI_HVDC"
-    grid["gen"]["503"]["gen_bus"] = 26
+    grid["gen"]["503"]["gen_bus"] = 134
     grid["gen"]["503"]["zone"] = "BE00"
 
     # 188 branches in total before energy island
@@ -1304,8 +1303,6 @@ function add_energy_island(grid)
         grid["branch"]["$(n_branches+i)"]["interconnection"] = true
         grid["branch"]["$(n_branches+i)"]["index"] = deepcopy(n_branches+i)
         grid["branch"]["$(n_branches+i)"]["rate_a"] = 4.0
-        grid["branch"]["$(n_branches+i)"]["br_r"] = 0.0001
-        #grid["branch"]["$(n_branches+i)"]["br_x"] = 0.001
         delete!(grid["branch"]["$(n_branches+i)"],"f_bus_name_kV")
         delete!(grid["branch"]["$(n_branches+i)"],"t_bus_name_kV")
         delete!(grid["branch"]["$(n_branches+i)"],"f_bus_full_name_kV")
@@ -1331,7 +1328,6 @@ function add_energy_island(grid)
     # AC connections withing the energy island -> this is the switch
     for i in 7:7
         grid["branch"]["$(n_branches+i)"]["rate_a"] = 99.99
-        grid["branch"]["$(n_branches+i)"]["br_r"] = 10^(-6)
         grid["branch"]["$(n_branches+i)"]["f_bus"] = 133 # EI_AC_1_220
         grid["branch"]["$(n_branches+i)"]["t_bus"] = 134 # EI_AC_2_220 
         grid["branch"]["$(n_branches+i)"]["f_bus_full_name_kV"] = "EI_AC_1_220"

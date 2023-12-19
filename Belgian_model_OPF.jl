@@ -20,10 +20,43 @@ BE_grid_file = joinpath(folder_results,"test_cases/Belgian_transmission_grid_dat
 BE_grid = _PM.parse_file(BE_grid_file)
 #_PMACDC.process_additional_data!(BE_grid)
 
+#=
+# Just trying to increase the power flow through the branches here
 for (br_id,br) in BE_grid["branch"]
     br["br_r"] = br["br_r"]/100
     br["br_x"] = br["br_x"]/100
 end
+
+
+# To be chechked:
+# voltage angles of the buses 
+for (br_id,br) in BE_grid["bus"]
+    if br_id != "1"
+        br["bus_type"] = 1
+    end
+end
+
+# transformers defined correctly
+for (br_id,br) in BE_grid["branch"]
+    if haskey(br,"trafo") && br["trafo"] == true
+        br["transformer"] = true
+    end
+end
+
+for (g_id,g) in BE_grid["gen"]
+    if g["type"] == "Nuclear"
+        g["cost"][1] = 0.0
+    end
+end
+
+for (br_id,br) in BE_grid["branch"]
+    br["angmin"] = br["angmin"]*10
+    br["angmax"] = br["angmax"]*10
+end
+=#
+
+# generator values
+# -> Nuclear not generating WHY
 
 # North sea grid backbone -> to be adjusted later
 North_sea_grid_file = joinpath(folder_results,"test_cases/North_Sea_zonal_model_with_generators.m")
@@ -39,6 +72,67 @@ _PMACDC.process_additional_data!(example_dc_grid)
 s = Dict("output" => Dict("branch_flows" => true), "conv_losses_mp" => true)
 result = _PMACDC.run_acdcopf(BE_grid,DCPPowerModel,gurobi; setting = s)
 
+
+voll_ = 0
+voll_single = []
+for (g_id,g) in BE_grid["gen"]
+    if g["type"] == "VOLL"
+        voll_ = voll_ + result["solution"]["gen"][g_id]["pg"]
+        push!(voll_single,[g_id,result["solution"]["gen"][g_id]["pg"]])
+    end
+end
+voll_
+
+
+nuclear_gen = 0
+for (g_id,g) in BE_grid["gen"]
+    if g["type"] == "Nuclear"
+        print("GEN NUCLEAR $(g_id), generating $(result["solution"]["gen"][g_id]["pg"])","\n")
+        nuclear_gen = nuclear_gen + result["solution"]["gen"][g_id]["pg"]
+    end
+end
+nuclear_gen
+
+ccgt_gen = 0
+for (g_id,g) in BE_grid["gen"]
+    if g["type"] == "Gas CCGT new"
+        print("GEN Gas CCGT new $(g_id), generating $(result["solution"]["gen"][g_id]["pg"])","\n")
+        ccgt_gen = ccgt_gen + result["solution"]["gen"][g_id]["pg"]
+    end
+end
+ccgt_gen
+
+gen_ = 0
+
+for i in 1:498 
+    if result["solution"]["gen"]["$i"]["pg"] != 0.0
+        print("GEN $(i), type $(BE_grid["gen"]["$i"]["type"]), generating $(result["solution"]["gen"]["$i"]["pg"]),substation $(BE_grid["gen"]["$i"]["substation_full_name_kV"])","\n")
+        gen_ = gen_ + result["solution"]["gen"]["$i"]["pg"]
+    end
+end
+gen_
+
+
+
+types = []
+for (g_id,g) in BE_grid["gen"]
+   push!(types,g["type"])
+end
+unique(types)
+
+
+
+for (br_id,br) in BE_grid["branch"]
+    if br["f_bus"] == 21 || br["t_bus"] == 21
+        print(br_id,"\n")
+        print(result["solution"]["branch"][br_id]["pf"],"\n")
+        print(br["rate_a"],"\n")
+        print("______","\n")
+    end
+end
+
+
+#=
 ##################################################################
 ## Choosing the number of hours, scenario and climate year
 number_of_hours = 8760
@@ -97,15 +191,17 @@ obj_EI = []
 for (i_id,i) in results_EI
     push!(obj_EI,i["objective"])
 end
+=#
 
 
 
-
-for (br_id,br) in BE_grid_energy_island["branch"]
+for (br_id,br) in BE_grid_energy_island["gen"]
     #if br["f_bus"] == 26 || br["t_bus"] == 26
-        print(br_id,"_",results_EI["24"]["solution"]["branch"][br_id]["pt"],"_",abs(results_EI["1"]["solution"]["branch"][br_id]["pt"]/br["rate_a"]),"\n")
+        print(br_id,"_",results_EI["12"]["solution"]["gen"][br_id]["pg"],"_",br["pmax"],"_",br["type"],"\n")
     #end
 end
+
+
 
 
 for (br_id,br) in BE_grid_energy_island["bus"]
@@ -114,7 +210,7 @@ for (br_id,br) in BE_grid_energy_island["bus"]
     #end
 end
 
-
+#=
 voll_ = []
 for i in 1:number_of_hours
     sum_ = 0
@@ -126,7 +222,7 @@ for i in 1:number_of_hours
     push!(voll_,sum_)
 end
 
-#=
+
 json_string_grid = JSON.json(BE_NS_grid)
 open(joinpath(folder_results,folder,"Belgium_and_North_Sea_grid.json"),"w" ) do f
 write(f,json_string_grid)
