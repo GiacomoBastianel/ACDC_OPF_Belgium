@@ -14,21 +14,21 @@ using DataFrames
 
 ##################################################################
 # Including other files
-include("load_data.jl")
-include("build_grid_data.jl")
-#include("process_results.jl")
-include("get_grid_data.jl")
-#include("process_results.jl")
+#include("src/core/build_grid_data.jl")
+#include("src/core/load_data.jl")
+#include("src/core/Creating_Belgian_grid.jl")
+#include("src/core/traversal_algorithm.jl")
+
 ##################################################################
 
-grid_data = joinpath(@__DIR__,"Elia_static_grid_data.xlsx")
-gen_data = joinpath(@__DIR__,"Generation_units_with_substations.xlsx")
+grid_data = joinpath(dirname(dirname(@__DIR__)),"public_data_Elia/Elia_static_grid_data.xlsx")
+gen_data = joinpath(dirname(dirname(@__DIR__)),"public_data_Elia/Generation_units_with_substations.xlsx")
 BE_grid_data = XLSX.readxlsx(grid_data)
 BE_gen_data = XLSX.readxlsx(gen_data)
 cities = CSV.read("/Users/giacomobastianel/Desktop/Lat_lon_cities_Belgium.csv",DataFrame)
 
 folder_results = @__DIR__
-North_sea_grid_file = joinpath(folder_results,"Data/case5_acdc.m")
+North_sea_grid_file = joinpath(dirname(dirname(@__DIR__)),"test_cases/toy_model_North_Sea.m")
 North_sea_grid = _PM.parse_file(North_sea_grid_file)
 _PMACDC.process_additional_data!(North_sea_grid)
 
@@ -42,7 +42,7 @@ for i in 1:2757
     Belgian_cities["$i"]["lon"] = cities[:,3][i]
 end
 
-base_case = joinpath(@__DIR__,"Data/toy_model_North_Sea.m")
+base_case = joinpath(dirname(dirname(@__DIR__)),"test_cases/toy_model_North_Sea.m")
 
 ## Here we are using the parser of Powermodels for convenience 
 data = _PM.parse_file(base_case)
@@ -293,26 +293,29 @@ function adding_onshore_wind_and_solar_pv_list(dict)
     end
 end
 
+Z_base = (380*10^3)^2/(10^2*10^6)
+
+
 # This works
 function creating_branch_list(dict)
     for i in 1:93 # Number of branches -> 93
         dict["$i"] = deepcopy(data["branch"]["1"])
-        dict["$i"]["br_r"] = deepcopy(R[i]/BE_data["baseMVA"])
-        dict["$i"]["rate_a"] = deepcopy((I_nom[i]/10^3*U[i])/BE_data["baseMVA"])
+        dict["$i"]["br_r"] = deepcopy(R[i]/Z_base)
+        dict["$i"]["rate_a"] = deepcopy((I_nom[i]*U[i]*10^3)/(BE_data["baseMVA"]*10^6))
         dict["$i"]["source_id"][2] = i
         dict["$i"]["rate_b"] = deepcopy(dict["$i"]["rate_a"])
         dict["$i"]["rate_c"] = deepcopy(dict["$i"]["rate_a"])
-        dict["$i"]["br_x"] = deepcopy(X[i]/BE_data["baseMVA"])
-        dict["$i"]["b_fr"] = deepcopy(dict["$i"]["br_r"])
-        dict["$i"]["b_to"] = deepcopy(dict["$i"]["br_r"])
+        dict["$i"]["br_x"] = deepcopy(X[i]/Z_base)
+        dict["$i"]["b_fr"] = 0.0 #deepcopy(abs(inv(dict["$i"]["br_r"]+im*dict["$i"]["br_x"])))
+        dict["$i"]["b_to"] = 0.0 #deepcopy(abs(inv(dict["$i"]["br_r"]+im*dict["$i"]["br_x"])))
         dict["$i"]["index"] = i
         dict["$i"]["length"] = Length[i]
         dict["$i"]["angmin"] = -90.0
         dict["$i"]["angmax"] = 90.0
-        dict["$i"]["wC"] = wC[i]/BE_data["baseMVA"]
+        dict["$i"]["wC"] = wC[i]/Z_base
         dict["$i"]["base_kV"] = U[i]
         dict["$i"]["interconnection"] = false
-        dict["$i"]["trafo"] = false
+        dict["$i"]["transformer"] = false
         dict["$i"]["f_bus_name"] = deepcopy(sub_1[i])
         dict["$i"]["t_bus_name"] = deepcopy(sub_2[i])
         dict["$i"]["f_bus_full_name"] = deepcopy(sub_1_full_name[i])
@@ -326,22 +329,22 @@ function creating_branch_list(dict)
     for i in 1:12
         l = i + 93
         dict["$l"] = deepcopy(data["branch"]["1"])
-        dict["$l"]["br_r"] = deepcopy(R_interconnection[i]/BE_data["baseMVA"])
-        dict["$l"]["rate_a"] = deepcopy(((I_nom_interconnection[i]*U_interconnection[i])/10^3)/BE_data["baseMVA"])
+        dict["$l"]["br_r"] = deepcopy(R_interconnection[i]/Z_base)
+        dict["$l"]["rate_a"] = deepcopy((I_nom_interconnection[i]*U_interconnection[i]*10^3)/(BE_data["baseMVA"]*10^6))
         dict["$l"]["source_id"][2] = l
         dict["$l"]["rate_b"] = deepcopy(dict["$l"]["rate_a"])
         dict["$l"]["rate_c"] = deepcopy(dict["$l"]["rate_a"])
-        dict["$l"]["br_x"] = deepcopy(X_interconnection[i]/BE_data["baseMVA"])
-        dict["$l"]["b_fr"] = deepcopy(dict["$l"]["br_r"])
-        dict["$l"]["b_to"] = deepcopy(dict["$l"]["br_r"])
+        dict["$l"]["br_x"] = deepcopy(X_interconnection[i]/Z_base)
+        dict["$l"]["b_fr"] = 0.0 #deepcopy(abs(inv(dict["$i"]["br_r"]+im*dict["$i"]["br_x"])))
+        dict["$l"]["b_to"] = 0.0 #deepcopy(abs(inv(dict["$i"]["br_r"]+im*dict["$i"]["br_x"])))
         dict["$l"]["index"] = l
         dict["$l"]["length"] = Length_interconnection[i]
         dict["$i"]["angmin"] = -360.0
         dict["$i"]["angmax"] = 360.0
         dict["$i"]["base_kV"] = U_interconnection[i]
-        dict["$l"]["wC"] = wC_interconnection[i]/BE_data["baseMVA"]
+        dict["$l"]["wC"] = wC_interconnection[i]/Z_base
         dict["$l"]["interconnection"] = true
-        dict["$i"]["trafo"] = false
+        dict["$i"]["transformer"] = false
         dict["$l"]["f_bus_name"] = deepcopy(sub_1_interconnection[i])
         dict["$l"]["t_bus_name"] = deepcopy(sub_2_interconnection[i])
         dict["$l"]["f_bus_full_name"] = deepcopy(sub_1_full_name_interconnection[i])
@@ -665,20 +668,20 @@ creating_trafos_list(BE_data["bus"],unique_sub_2_trafo_kV,unique_sub_2_full_name
 for l in 1:67
     i = l + 105
     BE_data["branch"]["$i"] = deepcopy(data["branch"]["1"])
-    BE_data["branch"]["$i"]["br_r"] = 10^(-2) #assumed value, the fictitious branches just need to bring power to the load, no need to constrain them in power
+    BE_data["branch"]["$i"]["br_r"] = 10^(-2)/Z_base #assumed value, the fictitious branches just need to bring power to the load, no need to constrain them in power
     BE_data["branch"]["$i"]["rate_a"] = 100.0 #assumed value, the fictitious branches just need to bring power to the load, no need to constrain them in power
     BE_data["branch"]["$i"]["source_id"][2] = i
     BE_data["branch"]["$i"]["rate_b"] = deepcopy(BE_data["branch"]["$i"]["rate_a"])
     BE_data["branch"]["$i"]["rate_c"] = deepcopy(BE_data["branch"]["$i"]["rate_a"])
-    BE_data["branch"]["$i"]["br_x"] = 10^-4
-    BE_data["branch"]["$i"]["b_fr"] = deepcopy(BE_data["branch"]["$i"]["br_r"])
-    BE_data["branch"]["$i"]["b_to"] = deepcopy(BE_data["branch"]["$i"]["br_r"])
+    BE_data["branch"]["$i"]["br_x"] = 10^-2/Z_base
+    BE_data["branch"]["$i"]["b_fr"] = 0.0 #deepcopy(abs(inv(dict["$i"]["br_r"]+im*dict["$i"]["br_x"])))
+    BE_data["branch"]["$i"]["b_to"] = 0.0 #deepcopy(abs(inv(dict["$i"]["br_r"]+im*dict["$i"]["br_x"])))
     BE_data["branch"]["$i"]["index"] = i #assumed value, the fictitious branches just need to bring power to the load, no need to constrain them in power
     BE_data["branch"]["$i"]["length"] = 0.01 # same trafo
-    BE_data["branch"]["$i"]["angmin"] = -360.0
-    BE_data["branch"]["$i"]["angmax"] = 360.0
+    BE_data["branch"]["$i"]["angmin"] = -90.0
+    BE_data["branch"]["$i"]["angmax"] = 90.0
     BE_data["branch"]["$i"]["base_kV"] = V2_trafo[l]
-    BE_data["branch"]["$i"]["wC"] = 0.01
+    BE_data["branch"]["$i"]["wC"] = 0.01/Z_base
     BE_data["branch"]["$i"]["interconnection"] = false
     BE_data["branch"]["$i"]["trafo"] = true
     BE_data["branch"]["$i"]["f_bus_name_kV"] =      deepcopy("$(sub_1_trafo[l])"*"_"*"$(U_Nr_trafo[l][1:3])")
@@ -1354,14 +1357,14 @@ for (l_id,l) in BE_data["load"]
 end
 
 # Fixing the br_r in the branches when it is == 0.0
-count_ = 0
-for (l_id,l) in BE_data["branch"]
-    if l["br_r"] == 0.0
-        l["br_r"] = 0.01
-        l["b_fr"] = 0.01
-        l["b_to"] = 0.01
-    end
-end
+#count_ = 0
+#for (l_id,l) in BE_data["branch"]
+#    if l["br_r"] == 0.0
+#        l["br_r"] = 0.01
+#        l["b_fr"] = 0.01
+#        l["b_to"] = 0.01
+#    end
+#end
 
 # Adding the HVDC branches
 create_DC_grid_and_Nemo_and_Alegro_interconnections(BE_data)

@@ -1,6 +1,6 @@
 using PowerModels; const _PM = PowerModels
 using PowerModelsACDC; const _PMACDC = PowerModelsACDC
-using ACDC_OPF_Belgium; const _BE = ACDC_OPF_Belgium
+#using ACDC_OPF_Belgium; const _BE = ACDC_OPF_Belgium
 using Gurobi
 using JuMP
 using DataFrames
@@ -9,7 +9,10 @@ using Plots
 
 gurobi = JuMP.optimizer_with_attributes(Gurobi.Optimizer)
 
-include("src/core/build_grid_data.jl")
+
+include(joinpath((@__DIR__,"src/core/build_grid_data.jl")))
+include(joinpath((@__DIR__,"src/core/load_data.jl")))
+#include(joinpath((@__DIR__,"src/core/traversal_algorithm.jl")))
 
 ##################################################################
 ## Processing input data
@@ -18,7 +21,9 @@ folder_results = @__DIR__
 # Belgium grid without energy island
 BE_grid_file = joinpath(folder_results,"test_cases/Belgian_transmission_grid_data_Elia_2023.json")
 BE_grid = _PM.parse_file(BE_grid_file)
-#_PMACDC.process_additional_data!(BE_grid)
+_PMACDC.process_additional_data!(BE_grid)
+
+
 
 #=
 # Just trying to increase the power flow through the branches here
