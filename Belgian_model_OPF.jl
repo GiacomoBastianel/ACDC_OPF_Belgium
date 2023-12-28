@@ -6,9 +6,11 @@ using JuMP
 using DataFrames
 using CSV
 using Plots
+using Feather
+using JSON
 
 gurobi = JuMP.optimizer_with_attributes(Gurobi.Optimizer)
-
+ipopt = JuMP.optimizer_with_attributes(Ipopt.Optimizer)
 
 include(joinpath((@__DIR__,"src/core/build_grid_data.jl")))
 include(joinpath((@__DIR__,"src/core/load_data.jl")))
@@ -18,50 +20,15 @@ include(joinpath((@__DIR__,"src/core/load_data.jl")))
 ## Processing input data
 folder_results = @__DIR__
 
+# Adjusting the substations
+
 # Belgium grid without energy island
 BE_grid_file = joinpath(folder_results,"test_cases/Belgian_transmission_grid_data_Elia_2023.json")
 BE_grid = _PM.parse_file(BE_grid_file)
+BE_grid_json = JSON.parsefile(BE_grid_file)
+
 _PMACDC.process_additional_data!(BE_grid)
-
-
-
-#=
-# Just trying to increase the power flow through the branches here
-for (br_id,br) in BE_grid["branch"]
-    br["br_r"] = br["br_r"]/100
-    br["br_x"] = br["br_x"]/100
-end
-
-
-# To be chechked:
-# voltage angles of the buses 
-for (br_id,br) in BE_grid["bus"]
-    if br_id != "1"
-        br["bus_type"] = 1
-    end
-end
-
-# transformers defined correctly
-for (br_id,br) in BE_grid["branch"]
-    if haskey(br,"trafo") && br["trafo"] == true
-        br["transformer"] = true
-    end
-end
-
-for (g_id,g) in BE_grid["gen"]
-    if g["type"] == "Nuclear"
-        g["cost"][1] = 0.0
-    end
-end
-
-for (br_id,br) in BE_grid["branch"]
-    br["angmin"] = br["angmin"]*10
-    br["angmax"] = br["angmax"]*10
-end
-=#
-
-# generator values
-# -> Nuclear not generating WHY
+_PMACDC.process_additional_data!(BE_grid_json)
 
 # North sea grid backbone -> to be adjusted later
 North_sea_grid_file = joinpath(folder_results,"test_cases/North_Sea_zonal_model_with_generators.m")
@@ -73,71 +40,12 @@ example_dc_grid_file = joinpath(folder_results,"test_cases/case5_acdc.m")
 example_dc_grid = _PM.parse_file(example_dc_grid_file)
 _PMACDC.process_additional_data!(example_dc_grid)
 
+
 # Testing the OPF
 s = Dict("output" => Dict("branch_flows" => true), "conv_losses_mp" => true)
 result = _PMACDC.run_acdcopf(BE_grid,DCPPowerModel,gurobi; setting = s)
 
 
-voll_ = 0
-voll_single = []
-for (g_id,g) in BE_grid["gen"]
-    if g["type"] == "VOLL"
-        voll_ = voll_ + result["solution"]["gen"][g_id]["pg"]
-        push!(voll_single,[g_id,result["solution"]["gen"][g_id]["pg"]])
-    end
-end
-voll_
-
-
-nuclear_gen = 0
-for (g_id,g) in BE_grid["gen"]
-    if g["type"] == "Nuclear"
-        print("GEN NUCLEAR $(g_id), generating $(result["solution"]["gen"][g_id]["pg"])","\n")
-        nuclear_gen = nuclear_gen + result["solution"]["gen"][g_id]["pg"]
-    end
-end
-nuclear_gen
-
-ccgt_gen = 0
-for (g_id,g) in BE_grid["gen"]
-    if g["type"] == "Gas CCGT new"
-        print("GEN Gas CCGT new $(g_id), generating $(result["solution"]["gen"][g_id]["pg"])","\n")
-        ccgt_gen = ccgt_gen + result["solution"]["gen"][g_id]["pg"]
-    end
-end
-ccgt_gen
-
-gen_ = 0
-
-for i in 1:498 
-    if result["solution"]["gen"]["$i"]["pg"] != 0.0
-        print("GEN $(i), type $(BE_grid["gen"]["$i"]["type"]), generating $(result["solution"]["gen"]["$i"]["pg"]),substation $(BE_grid["gen"]["$i"]["substation_full_name_kV"])","\n")
-        gen_ = gen_ + result["solution"]["gen"]["$i"]["pg"]
-    end
-end
-gen_
-
-
-
-types = []
-for (g_id,g) in BE_grid["gen"]
-   push!(types,g["type"])
-end
-unique(types)
-
-
-
-for (br_id,br) in BE_grid["branch"]
-    if br["f_bus"] == 21 || br["t_bus"] == 21
-        print(br_id,"\n")
-        print(result["solution"]["branch"][br_id]["pf"],"\n")
-        print(br["rate_a"],"\n")
-        print("______","\n")
-    end
-end
-
-
-#=
 ##################################################################
 ## Choosing the number of hours, scenario and climate year
 number_of_hours = 8760
@@ -148,8 +56,8 @@ year_int = parse(Int64,year)
 ##################################################################
 ## Processing time series -> this needs to be fixed for Github!
 # Creating RES time series for Belgium from Feather files in tyndpdata desktop folder
-pv, wind_onshore, wind_offshore = _BE.load_res_data()
-wind_onshore_BE, wind_offshore_BE, solar_pv_BE = _BE.make_res_time_series(wind_onshore, wind_offshore, pv, "BE00",year_int)
+pv, wind_onshore, wind_offshore = load_res_data()
+wind_onshore_BE, wind_offshore_BE, solar_pv_BE = make_res_time_series(wind_onshore, wind_offshore, pv, "BE00",year_int)
 
 # Creating load series for Belgium from TYNDP data 
 load_series_BE_max = create_load_series(scenario,year,"BE00",1,number_of_hours)
@@ -160,7 +68,7 @@ for i in 1:length(load_series_BE)
 end
 
 # Adding "power_portion" to loads (percentage out of the total load), useful to distribute the total demand among each load 
-_BE.dimensioning_load(BE_grid)
+dimensioning_load(BE_grid)
 
 ###############################################################
 ## Processing grid
@@ -169,7 +77,7 @@ create_gen_load_interconnections(BE_grid)
 
 # Creating power flow series for each interconnector, to be downloaded for each year by ENTSO-E TYNDP database
 power_flow_LU_BE,power_flow_BE_LU,power_flow_DE_BE,power_flow_BE_DE,power_flow_NL_BE,power_flow_BE_NL,power_flow_UK_BE,power_flow_BE_UK,power_flow_FR_BE,power_flow_BE_FR = create_interconnectors_power_flow(BE_grid)
-flow_BE_DE,flow_DE_BE,flow_UK_BE,flow_BE_UK,flow_LU_BE,flow_BE_LU,flow_NL_BE,flow_BE_NL,flow_FR_BE,flow_BE_FR = _BE.sanity_check(power_flow_DE_BE,power_flow_BE_DE,power_flow_UK_BE,power_flow_BE_UK,power_flow_LU_BE,power_flow_BE_LU,power_flow_NL_BE,power_flow_BE_NL,power_flow_FR_BE,power_flow_BE_FR,number_of_hours)
+flow_BE_DE,flow_DE_BE,flow_UK_BE,flow_BE_UK,flow_LU_BE,flow_BE_LU,flow_NL_BE,flow_BE_NL,flow_FR_BE,flow_BE_FR = sanity_check(power_flow_DE_BE,power_flow_BE_DE,power_flow_UK_BE,power_flow_BE_UK,power_flow_LU_BE,power_flow_BE_LU,power_flow_NL_BE,power_flow_BE_NL,power_flow_FR_BE,power_flow_BE_FR,number_of_hours)
 
 
 ## Adding the energy island
@@ -177,7 +85,7 @@ BE_grid_energy_island = deepcopy(BE_grid)
 add_energy_island(BE_grid_energy_island)
 
 # Reducing load to today's values
-load_BE = load_BE*0.7
+#load_BE = load_BE*0.7
 
 number_of_hours = 24
 s = Dict("output" => Dict("branch_flows" => true), "conv_losses_mp" => true)
@@ -198,25 +106,25 @@ for (i_id,i) in results_EI
 end
 =#
 
+obj_ = obj*100
+obj_EI = obj_EI*100
+load_ = load_BE[1:24]
 
+el_price = obj_./load_
+el_price = obj_EI./load_
 
-for (br_id,br) in BE_grid_energy_island["gen"]
-    #if br["f_bus"] == 26 || br["t_bus"] == 26
-        print(br_id,"_",results_EI["12"]["solution"]["gen"][br_id]["pg"],"_",br["pmax"],"_",br["type"],"\n")
-    #end
-end
-
-
-
-
-for (br_id,br) in BE_grid_energy_island["bus"]
-    #if br["f_bus"] == 26 || br["t_bus"] == 26
-        print(br["bus_type"],"\n")
-    #end
-end
-
-#=
 voll_ = []
+for i in 1:number_of_hours
+    sum_ = 0
+    for (g_id,g) in BE_grid["gen"]
+        if g["type"] == "VOLL"
+            sum_ = sum_ + results["$i"]["solution"]["gen"][g_id]["pg"]
+        end
+    end
+    push!(voll_,sum_)
+end
+
+voll_EI = []
 for i in 1:number_of_hours
     sum_ = 0
     for (g_id,g) in BE_grid["gen"]
@@ -224,7 +132,7 @@ for i in 1:number_of_hours
             sum_ = sum_ + results_EI["$i"]["solution"]["gen"][g_id]["pg"]
         end
     end
-    push!(voll_,sum_)
+    push!(voll_EI,sum_)
 end
 
 
