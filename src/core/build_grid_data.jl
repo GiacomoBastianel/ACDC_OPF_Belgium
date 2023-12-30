@@ -688,7 +688,7 @@ function create_gen_load_interconnections(grid)
     BE_grid["load"]["72"]["load_bus"] = 132
     BE_grid["load"]["72"]["neighbouring"] = true
 
-    # NEED TO CREATE BRANCHES LINKING X_BUSES TO THESE NEW BUSES
+    # NEED TO CREATE BRANCHES LINKING X_BUSES TO THESE NEW BUSES -> already existing
     for i in 1:12
         BE_grid["branch"]["$(n_branches+i)"] = deepcopy(BE_grid["branch"]["1"])
         BE_grid["branch"]["$(n_branches+i)"]["source_id"][2] = deepcopy(n_branches+i)
@@ -709,6 +709,7 @@ function create_gen_load_interconnections(grid)
 
     # France
     BE_grid["branch"]["177"]["f_bus"] = 130 #FR
+    BE_grid["branch"]["177"]["f_bus_name"] = "FR00_380"
     BE_grid["branch"]["177"]["t_bus"] = 68 
     BE_grid["branch"]["177"]["t_bus_full_name_kV"] = "CHOOZ_220"
     BE_grid["branch"]["177"]["t_bus_name_kV"] = "XMO_CH21_220"
@@ -716,6 +717,7 @@ function create_gen_load_interconnections(grid)
     BE_grid["branch"]["177"]["t_bus_name"] = "XMO_CH21"
 
     BE_grid["branch"]["178"]["f_bus"] = 130 #FR
+    BE_grid["branch"]["178"]["f_bus_name"] = "FR00_380"
     BE_grid["branch"]["178"]["t_bus"] = 71
     BE_grid["branch"]["178"]["t_bus_full_name_kV"] = "MOULAINE_220"
     BE_grid["branch"]["178"]["t_bus_name_kV"] = "XAU_MO22_220"
@@ -723,6 +725,7 @@ function create_gen_load_interconnections(grid)
     BE_grid["branch"]["178"]["t_bus_name"] = "XAU_MO22"
 
     BE_grid["branch"]["179"]["f_bus"] = 130 #FR
+    BE_grid["branch"]["179"]["f_bus_name"] = "FR00_380"
     BE_grid["branch"]["179"]["t_bus"] = 72
     BE_grid["branch"]["179"]["t_bus_full_name_kV"] = "MOULAINE_220"
     BE_grid["branch"]["179"]["t_bus_name_kV"] = "XAU_M.21_220"
@@ -730,6 +733,7 @@ function create_gen_load_interconnections(grid)
     BE_grid["branch"]["179"]["t_bus_name"] = "XAU_M.21"
 
     BE_grid["branch"]["180"]["f_bus"] = 130 #FR
+    BE_grid["branch"]["180"]["f_bus_name"] = "FR00_380"
     BE_grid["branch"]["180"]["t_bus"] = 73
     BE_grid["branch"]["180"]["t_bus_full_name_kV"] = "LONNY_380"
     BE_grid["branch"]["180"]["t_bus_name_kV"] = "XAC_LO11_380"
@@ -737,6 +741,7 @@ function create_gen_load_interconnections(grid)
     BE_grid["branch"]["180"]["t_bus_name"] = "XAC_LO11"
 
     BE_grid["branch"]["181"]["f_bus"] = 130 #FR
+    BE_grid["branch"]["181"]["f_bus_name"] = "FR00_380"
     BE_grid["branch"]["181"]["t_bus"] = 78
     BE_grid["branch"]["181"]["t_bus_full_name_kV"] = "MASTAING_380"
     BE_grid["branch"]["181"]["t_bus_name_kV"] = "XAV_MA11_380"
@@ -744,6 +749,7 @@ function create_gen_load_interconnections(grid)
     BE_grid["branch"]["181"]["t_bus_name"] = "XAV_MA11"
 
     BE_grid["branch"]["182"]["f_bus"] = 130 #FR
+    BE_grid["branch"]["182"]["f_bus_name"] = "FR00_380"
     BE_grid["branch"]["182"]["t_bus"] = 79
     BE_grid["branch"]["182"]["t_bus_full_name_kV"] = "AVELIN_380"
     BE_grid["branch"]["182"]["t_bus_name_kV"] = "XAV_AV11_380"
@@ -752,6 +758,7 @@ function create_gen_load_interconnections(grid)
 
     # Luxembourg
     BE_grid["branch"]["183"]["f_bus"] = 131 #LU
+    BE_grid["branch"]["183"]["f_bus_name"] = "LU00_380"
     BE_grid["branch"]["183"]["t_bus"] = 69
     BE_grid["branch"]["183"]["t_bus_full_name_kV"] = "ESCH / BELVAL_220"
     BE_grid["branch"]["183"]["t_bus_name_kV"] = "ESCH _220"
@@ -759,6 +766,7 @@ function create_gen_load_interconnections(grid)
     BE_grid["branch"]["183"]["t_bus_name"] = "ESCH "
 
     BE_grid["branch"]["184"]["f_bus"] = 131 #LU
+    BE_grid["branch"]["184"]["f_bus_name"] = "LU00_380"
     BE_grid["branch"]["184"]["t_bus"] = 70
     BE_grid["branch"]["184"]["t_bus_full_name_kV"] = "SANEM_220"
     BE_grid["branch"]["184"]["t_bus_name_kV"] = "XAU_SA21_220"
@@ -767,6 +775,7 @@ function create_gen_load_interconnections(grid)
 
     # The Netherlands
     BE_grid["branch"]["185"]["f_bus"] = 132 #NL
+    BE_grid["branch"]["185"]["f_bus_name"] = "NL00_380"
     BE_grid["branch"]["185"]["t_bus"] = 74
     BE_grid["branch"]["185"]["t_bus_full_name_kV"] = "MAASBRACHT_380"
     BE_grid["branch"]["185"]["t_bus_name_kV"] = "XVY_MB12_380"
@@ -774,6 +783,7 @@ function create_gen_load_interconnections(grid)
     BE_grid["branch"]["185"]["t_bus_name"] = "XVY_MB12 "
 
     BE_grid["branch"]["186"]["f_bus"] = 132 #NL
+    BE_grid["branch"]["186"]["f_bus_name"] = "NL00_380"
     BE_grid["branch"]["186"]["t_bus"] = 75
     BE_grid["branch"]["186"]["t_bus_full_name_kV"] = "MAASBRACHT_380"
     BE_grid["branch"]["186"]["t_bus_name_kV"] = "XVY_MB11_380"
@@ -781,6 +791,7 @@ function create_gen_load_interconnections(grid)
     BE_grid["branch"]["186"]["t_bus_name"] = "XVY_MB11"
     
     BE_grid["branch"]["187"]["f_bus"] = 132 #NL
+    BE_grid["branch"]["187"]["f_bus_name"] = "NL00_380"
     BE_grid["branch"]["187"]["t_bus"] = 76
     BE_grid["branch"]["187"]["t_bus_full_name_kV"] = "BORSSELE_380"
     BE_grid["branch"]["187"]["t_bus_name_kV"] = "XZA_BS11_380"
@@ -788,6 +799,7 @@ function create_gen_load_interconnections(grid)
     BE_grid["branch"]["187"]["t_bus_name"] = "XZA_BS11"
 
     BE_grid["branch"]["188"]["f_bus"] = 132 #NL
+    BE_grid["branch"]["188"]["f_bus_name"] = "NL00_380"
     BE_grid["branch"]["188"]["t_bus"] = 77
     BE_grid["branch"]["188"]["t_bus_full_name_kV"] = "GEERTRUIDENBERG_380"
     BE_grid["branch"]["188"]["t_bus_name_kV"] = "XZA_GT11_380"
@@ -1062,25 +1074,25 @@ function fix_hourly_loads_and_gen_interconnections(grid,hour) # -> doing nothing
         end
     end
     
-    for (l_id,l) in grid["gen"]
-        #if l["zone"] == "UK00" && l["type"] != "VOLL"
-        #    print(l_id,"\n")
-        #    l["pmax"] = deepcopy(flow_UK_BE[hour]/100) #pu
-        #    l["pmin"] = deepcopy(l["pmax"])
-        #elseif l["zone"] == "DE00"
-        #    l["pmax"] = deepcopy(flow_DE_BE[hour]/100) #pu
-        #    l["pmin"] = deepcopy(l["pmax"])
-        #elseif l["zone"] == "LU00"
-        #    l["pmax"] = deepcopy(flow_LU_BE[hour]/100) #pu
-        #    l["pmin"] = deepcopy(l["pmax"])
-        #elseif l["zone"] == "NL00"
-        #    l["pmax"] = flow_NL_BE[hour]/100 #pu
-        #    l["pmin"] = deepcopy(l["pmax"])     
-        #elseif l["zone"] == "FR00"
-        #    l["pmax"] = flow_FR_BE[hour]/100 #pu
-        #    l["pmin"] = deepcopy(l["pmax"])     
-        #end 
-    end    
+    #for (l_id,l) in grid["gen"]
+    #    if l["zone"] == "UK00" && l["type"] != "VOLL"
+    #        print(l_id,"\n")
+    #        l["pmax"] = deepcopy(flow_UK_BE[hour]/100) #pu
+    #        #l["pmin"] = deepcopy(l["pmax"])
+    #    elseif l["zone"] == "DE00"
+    #        l["pmax"] = deepcopy(flow_DE_BE[hour]/100) #pu
+    #        #l["pmin"] = deepcopy(l["pmax"])
+    #    elseif l["zone"] == "LU00"
+    #        l["pmax"] = deepcopy(flow_LU_BE[hour]/100) #pu
+    #        #l["pmin"] = deepcopy(l["pmax"])
+    #    elseif l["zone"] == "NL00"
+    #        l["pmax"] = flow_NL_BE[hour]/100 #pu
+    #        #l["pmin"] = deepcopy(l["pmax"])     
+    #    elseif l["zone"] == "FR00"
+    #        l["pmax"] = flow_FR_BE[hour]/100 #pu
+    #        #l["pmin"] = deepcopy(l["pmax"])     
+    #    end 
+    #end    
 end
 
 function fix_RES_time_series(grid,hour,wind_onshore_series,wind_offshore_series,solar_pv_series)

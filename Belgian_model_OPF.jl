@@ -8,6 +8,7 @@ using CSV
 using Plots
 using Feather
 using JSON
+using Ipopt
 
 gurobi = JuMP.optimizer_with_attributes(Gurobi.Optimizer)
 ipopt = JuMP.optimizer_with_attributes(Ipopt.Optimizer)
@@ -87,7 +88,7 @@ add_energy_island(BE_grid_energy_island)
 # Reducing load to today's values
 #load_BE = load_BE*0.7
 
-number_of_hours = 24
+number_of_hours = 8760
 s = Dict("output" => Dict("branch_flows" => true), "conv_losses_mp" => true)
 results = hourly_opf_BE(BE_grid,number_of_hours,load_BE,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
 
@@ -96,7 +97,7 @@ for (i_id,i) in results
     push!(obj,i["objective"])
 end
 
-number_of_hours = 24
+#number_of_hours = 720
 s = Dict("output" => Dict("branch_flows" => true), "conv_losses_mp" => true)
 results_EI = hourly_opf_BE(BE_grid_energy_island,number_of_hours,load_BE,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
 
@@ -104,14 +105,19 @@ obj_EI = []
 for (i_id,i) in results_EI
     push!(obj_EI,i["objective"])
 end
-=#
+
 
 obj_ = obj*100
 obj_EI = obj_EI*100
-load_ = load_BE[1:24]
+load_ = load_BE[1:number_of_hours]
+
+
 
 el_price = obj_./load_
-el_price = obj_EI./load_
+el_price_EI = obj_EI./load_
+
+sum(el_price)/number_of_hours
+sum(el_price_EI)/number_of_hours
 
 voll_ = []
 for i in 1:number_of_hours
@@ -136,9 +142,17 @@ for i in 1:number_of_hours
 end
 
 
-json_string_grid = JSON.json(BE_NS_grid)
-open(joinpath(folder_results,folder,"Belgium_and_North_Sea_grid.json"),"w" ) do f
+folder_results = "/Users/giacomobastianel/Desktop/Results_Belgium/Simulations_one_year"
+
+json_string_grid = JSON.json(results)
+open(joinpath(folder_results,"one_year_BE.json"),"w" ) do f
 write(f,json_string_grid)
+end
+
+json_string_grid = JSON.json(results_EI)
+open(joinpath(folder_results,"one_year_BE_EI.json"),"w" ) do f
+write(f,json_string_grid)
+end
 
 # Including Ventilus and Boucle du Hainaut -> not implemented yet
 build_ventilus_and_boucle_du_hainaut_interconnections = false
@@ -155,3 +169,27 @@ end
 
 plot(power_flows)
 =#
+
+count_ = 0
+for (br_id,br) in BE_grid["branch"]
+    if br["interconnection"] == true
+        print([br_id,br["interconnection"]],"\n")
+        count_ += 1
+    end
+end
+
+a = collect(94:106)
+b = collect(176:188)
+
+for i in 1:188
+    if BE_grid["branch"]["$i"]["interconnection"] == true
+        print([i,BE_grid["branch"]["$i"]["f_bus"],BE_grid["branch"]["$i"]["t_bus"]],"\n")
+    end
+end
+
+BE_grid["bus"]["130"]
+BE_grid["bus"]["131"]
+BE_grid["bus"]["132"]
+
+BE_grid["branch"]["183"]
+BE_grid["branch"]["184"]

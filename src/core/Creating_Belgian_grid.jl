@@ -173,7 +173,6 @@ BE_data["branchdc"] = Dict()
 BE_data["busdc"] = Dict()
 
 
-
 # This is good
 function creating_bus_list(dict)
     for i in 1:79
