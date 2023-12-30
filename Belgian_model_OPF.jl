@@ -154,42 +154,51 @@ open(joinpath(folder_results,"one_year_BE_EI.json"),"w" ) do f
 write(f,json_string_grid)
 end
 
+
+# Trying new branches
+folder_results = @__DIR__
+
+BE_grid_file = joinpath(folder_results,"test_cases/Belgian_transmission_grid_data_Elia_2023.json")
+BE_grid = _PM.parse_file(BE_grid_file)
+BE_grid_json = JSON.parsefile(BE_grid_file)
+
+_PMACDC.process_additional_data!(BE_grid)
+_PMACDC.process_additional_data!(BE_grid_json)
+
+# Adding "power_portion" to loads (percentage out of the total load), useful to distribute the total demand among each load 
+dimensioning_load(BE_grid)
+
+
+BE_grid_vbdh = deepcopy(BE_grid)
+
 # Including Ventilus and Boucle du Hainaut -> not implemented yet
-build_ventilus_and_boucle_du_hainaut_interconnections = false
+build_ventilus_and_boucle_du_hainaut_interconnections = true
 if build_ventilus_and_boucle_du_hainaut_interconnections == true
-    create_ventilus_and_boucle_du_hainaut_interconnections(BE_grid)
-end
-=#
-#=
-power_flows = []
-for i in 1:8760
-    hourly_inflow = deepcopy(power_flow_DE_BE[i]+power_flow_FR_BE[i]+power_flow_LU_BE[i]+power_flow_NL_BE[i]+power_flow_UK_BE[i])
-    push!(power_flows, hourly_inflow)
+    create_ventilus(BE_grid_vbdh)
+    create_boucle_du_hainaut(BE_grid_vbdh)
 end
 
-plot(power_flows)
-=#
 
-count_ = 0
-for (br_id,br) in BE_grid["branch"]
-    if br["interconnection"] == true
-        print([br_id,br["interconnection"]],"\n")
-        count_ += 1
-    end
+
+number_of_hours = 1440
+s = Dict("output" => Dict("branch_flows" => true), "conv_losses_mp" => true)
+results_vbdh = hourly_opf_BE(BE_grid_vbdh,number_of_hours,load_BE,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
+
+results = hourly_opf_BE(BE_grid,number_of_hours,load_BE,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
+
+
+obj_vbdh = []
+for (i_id,i) in results_vbdh
+    push!(obj_vbdh,i["objective"])
 end
 
-a = collect(94:106)
-b = collect(176:188)
-
-for i in 1:188
-    if BE_grid["branch"]["$i"]["interconnection"] == true
-        print([i,BE_grid["branch"]["$i"]["f_bus"],BE_grid["branch"]["$i"]["t_bus"]],"\n")
-    end
+obj = []
+for (i_id,i) in results
+    push!(obj,i["objective"])
 end
 
-BE_grid["bus"]["130"]
-BE_grid["bus"]["131"]
-BE_grid["bus"]["132"]
+sum(obj_vbdh)
+sum(obj)
 
-BE_grid["branch"]["183"]
-BE_grid["branch"]["184"]
+results_vbdh["1"]["solution"]["branch"]["179"]
+results_vbdh["1"]["solution"]["branch"]["180"]

@@ -1147,7 +1147,31 @@ function hourly_opf_BE_no_interconnections(grid,number_of_hours,load_series_BE,w
     return results, grid_hour
 end
 
+function create_ventilus(grid)
+    # Adding Ventilus
+    # Gezelle -> 26
+    # Izegem -> 10
+    n_branches = length(grid["branch"])
+    grid["branch"]["$(n_branches+1)"] = deepcopy(grid["branch"]["1"])
+    grid["branch"]["$(n_branches+1)"]["f_bus"] = 26
+    grid["branch"]["$(n_branches+1)"]["t_bus"] = 10
+    grid["branch"]["$(n_branches+1)"]["index"] = n_branches+1
+    grid["branch"]["$(n_branches+1)"]["source_id"][2] = n_branches+1
+    # Substation names to be added
+end
 
+function create_boucle_du_hainaut(grid)
+    # Adding Boucle du Hainaut
+    # Avelgem -> 8
+    # Courcelles -> 13
+    n_branches = length(grid["branch"])
+    grid["branch"]["$(n_branches+1)"] = deepcopy(grid["branch"]["1"])
+    grid["branch"]["$(n_branches+1)"]["f_bus"] = 8
+    grid["branch"]["$(n_branches+1)"]["t_bus"] = 13
+    grid["branch"]["$(n_branches+1)"]["index"] = n_branches+1
+    grid["branch"]["$(n_branches+1)"]["source_id"][2] = n_branches+1
+    # Substation names to be added
+end
 
 
 function sanity_check(power_flow_BE_DE,power_flow_DE_BE,power_flow_UK_BE,power_flow_BE_UK,power_flow_LU_BE,power_flow_BE_LU,power_flow_NL_BE,power_flow_BE_NL,power_flow_FR_BE,power_flow_BE_FR,number_of_hours)
@@ -1470,3 +1494,12 @@ function add_energy_island(grid)
 
 end
 
+for (br_id,br) in BE_grid["branch"]
+    if br["f_bus"] == 26 || br["t_bus"] == 26
+        print(br_id,"\n")
+    end
+end
+BE_grid["branch"]["41"]
+
+    print([br_id,br["full_name_kV"]],"\n")
+end
