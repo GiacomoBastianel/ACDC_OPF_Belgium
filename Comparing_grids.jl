@@ -67,7 +67,7 @@ dimensioning_load(BE_grid)
 
 ###############################################################
 ## Processing grid
-# Creating gens and loads for each neighbouring country -> not working yet
+# Creating gens and loads for each neighbouring country 
 create_gen_load_interconnections(BE_grid)
 
 # Creating power flow series for each interconnector, to be downloaded for each year by ENTSO-E TYNDP database
@@ -95,11 +95,41 @@ end
 number_of_hours = 8760
 s = Dict("output" => Dict("branch_flows" => true), "conv_losses_mp" => true)
 
-results = hourly_opf_BE(BE_grid,number_of_hours,load_BE,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
-results_ei = hourly_opf_BE(BE_grid_energy_island,number_of_hours,load_BE,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
-results_vbdh = hourly_opf_BE(BE_grid_vbdh,number_of_hours,load_BE,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
-results_vbdh_ei = hourly_opf_BE(BE_grid_energy_island_vbdh,number_of_hours,load_BE,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
+folder_results = "/Users/giacomobastianel/Desktop/Results_Belgium/Simulations_one_year"
 
+# Belgian grid 
+results = hourly_opf_BE(BE_grid,number_of_hours,load_BE,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
+
+json_string_grid = JSON.json(results)
+open(joinpath(folder_results,"one_year_BE.json"),"w" ) do f
+write(f,json_string_grid)
+end
+
+# Belgian grid with the energy island
+results = hourly_opf_BE(BE_grid_energy_island,number_of_hours,load_BE,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
+
+json_string_grid = JSON.json(results)
+open(joinpath(folder_results,"one_year_BE_EI.json"),"w" ) do f
+write(f,json_string_grid)
+end
+
+# Belgian grid with  Ventilus and Boucle-Du-Hainaut
+results = hourly_opf_BE(BE_grid_vbdh,number_of_hours,load_BE,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
+
+json_string_grid = JSON.json(results)
+open(joinpath(folder_results,"one_year_BE_vbdh.json"),"w" ) do f
+write(f,json_string_grid)
+end
+
+# Belgian grid with the energy island, Ventilus and Boucle-Du-Hainaut
+results = hourly_opf_BE(BE_grid_energy_island_vbdh,number_of_hours,load_BE,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
+
+json_string_grid = JSON.json(results)
+open(joinpath(folder_results,"one_year_BE_EI_vbdh.json"),"w" ) do f
+write(f,json_string_grid)
+end
+
+#=
 obj = []
 for (i_id,i) in results
     push!(obj,i["objective"])
@@ -148,29 +178,9 @@ avg_el_price = sum(el_price)/number_of_hours
 avg_el_price_EI = sum(el_price_EI)/number_of_hours
 avg_el_price_vdbh = sum(el_price_vbdh)/number_of_hours
 avg_el_price_EI_vbdh = sum(el_price_EI_vbdh)/number_of_hours
+=#
 
 
-folder_results = "/Users/giacomobastianel/Desktop/Results_Belgium/Simulations_one_year"
-
-json_string_grid = JSON.json(results)
-open(joinpath(folder_results,"one_year_BE.json"),"w" ) do f
-write(f,json_string_grid)
-end
-
-json_string_grid = JSON.json(results_ei)
-open(joinpath(folder_results,"one_year_BE_EI.json"),"w" ) do f
-write(f,json_string_grid)
-end
-
-json_string_grid = JSON.json(results_vbdh)
-open(joinpath(folder_results,"one_year_BE_vbdh.json"),"w" ) do f
-write(f,json_string_grid)
-end
-
-json_string_grid = JSON.json(results_vbdh_ei)
-open(joinpath(folder_results,"one_year_BE_EI_vbdh.json"),"w" ) do f
-write(f,json_string_grid)
-end
 
 
 

@@ -2,9 +2,18 @@ using JSON
 using PlotlyJS
 using DataFrames
 
-# INSERT HERE THE LINK TO THE GRID MODEL
+# INSERT HERE THE LINK TO THE GRID MODEL (run first the comparing_grids.jl script)
 ##############################################
-BE_data = deepcopy(BE_grid_energy_island)
+#BE_data = deepcopy(BE_grid)
+#BE_data = deepcopy(BE_grid_energy_island)
+#BE_data = deepcopy(BE_grid_vbdh)
+BE_data = deepcopy(BE_grid_energy_island_vbdh)
+
+file_pdf = "BE_grid_EI_vbdh.pdf"
+
+if length(BE_data["busdc"]) > 4
+    BE_data["busdc"]["6"]["lon"] = 2.85
+end
 ##############################################
 
 nodes = [] # vector for the buses
@@ -14,16 +23,21 @@ type = [] # to differentiate the bus type (AC or DC)
 count_ = 0
 for i in 1:length(BE_data["bus"]) # number of ac buses here
     print(i,"\n")
-    if haskey(BE_data["bus"]["$i"],"lat")
+    if haskey(BE_data["bus"]["$i"],"lat") && (i < 128 || i > 132)
         push!(nodes,BE_data["bus"]["$i"]["index"])
         push!(lat,BE_data["bus"]["$i"]["lat"])
         push!(lon,BE_data["bus"]["$i"]["lon"])
         push!(type,0)
+    elseif haskey(BE_data["bus"]["$i"],"lat") && (i > 127 || i < 131)
+        push!(nodes,BE_data["bus"]["$i"]["index"])
+        push!(lat,BE_data["bus"]["$i"]["lat"])
+        push!(lon,BE_data["bus"]["$i"]["lon"])
+        push!(type,2)
     end
 end    
 for i in 1:length(BE_data["busdc"]) # number of dc buses here
     print(i,"\n")
-    if haskey(BE_data["busdc"]["$i"],"lat")
+    if haskey(BE_data["busdc"]["$i"],"lat") 
         push!(nodes,BE_data["busdc"]["$i"]["index"])
         push!(lat,BE_data["busdc"]["$i"]["lat"])
         push!(lon,BE_data["busdc"]["$i"]["lon"])
@@ -83,7 +97,12 @@ markerAC = PlotlyJS.attr(size=[15*txt_x],
 dc_buses=filter(:type => ==(1), dict_nodes)        
 markerDC = PlotlyJS.attr(size=[15*txt_x],
             color="red")
-            
+
+zonal_buses=filter(:type => ==(2), dict_nodes)        
+markerzonal = PlotlyJS.attr(size=[15*txt_x],
+            color="orange")
+                        
+
 
 #AC buses legend
 traceAC = [PlotlyJS.scattergeo(;mode="markers",textfont=PlotlyJS.attr(size=10*txt_x),
@@ -97,6 +116,13 @@ textposition="top center",text=string(row[:node][1]),
            lat=[row[:lat]],lon=[row[:lon]],
            marker=markerDC)  for row in eachrow(dc_buses)] 
 mode="markers+text"
+
+#AC buses legend
+tracezonal = [PlotlyJS.scattergeo(;mode="markers",textfont=PlotlyJS.attr(size=10*txt_x),
+textposition="top center",text=string(row[:node]),
+lat=[row[:lat]],lon=[row[:lon]],
+marker=markerzonal)  for row in eachrow(zonal_buses)]
+
 
 #DC line display
 lineDC = PlotlyJS.attr(width=1*txt_x,color="red")#,dash="dash")
@@ -124,7 +150,7 @@ line=lineDC)
 for row in eachrow(map_) if (row[:type]==1)]
  
 #combine plot data                
-trace=vcat(traceAC,trace_AC,traceDC,trace_DC)
+trace=vcat(traceAC,trace_AC,traceDC,trace_DC,tracezonal)
 
  
 #set map location
@@ -144,7 +170,7 @@ folder_results = "/Users/giacomobastianel/Desktop/Results_Belgium/Figures"
 
 #display plot
 #PlotlyJS.plot(trace, layout)
-PlotlyJS.savefig(PlotlyJS.plot(trace, layout), joinpath(folder_results,"BE_grid_EI.pdf"))
+PlotlyJS.savefig(PlotlyJS.plot(trace, layout), joinpath(folder_results,file_pdf))
 #PlotlyJS.savefig(PlotlyJS.plot(trace, layout), joinpath(folder_results,folder,"Figures_"*"$case","$hour"*".png"))
 #savefig(PlotlyJS.plot(trace, layout), ".png")
 

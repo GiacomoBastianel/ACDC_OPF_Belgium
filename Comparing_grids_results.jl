@@ -21,7 +21,6 @@ include(joinpath((@__DIR__,"src/core/load_data.jl")))
 ## Processing input data
 folder_results = @__DIR__
 
-# Adjusting the substations
 
 # Belgium grid without energy island
 BE_grid_file = joinpath(folder_results,"test_cases/Belgian_transmission_grid_data_Elia_2023.json")
@@ -55,11 +54,6 @@ year = "1984"
 year_int = parse(Int64,year)
 
 ##################################################################
-## Processing time series -> this needs to be fixed for Github!
-# Creating RES time series for Belgium from Feather files in tyndpdata desktop folder
-pv, wind_onshore, wind_offshore = load_res_data()
-wind_onshore_BE, wind_offshore_BE, solar_pv_BE = make_res_time_series(wind_onshore, wind_offshore, pv, "BE00",year_int)
-
 # Creating load series for Belgium from TYNDP data 
 load_series_BE_max = create_load_series(scenario,year,"BE00",1,number_of_hours)
 load_series_BE = load_series_BE_max
@@ -68,34 +62,51 @@ for i in 1:length(load_series_BE)
     push!(load_BE,load_series_BE[i])
 end
 
-# Adding "power_portion" to loads (percentage out of the total load), useful to distribute the total demand among each load 
-dimensioning_load(BE_grid)
 
-###############################################################
-## Processing grid
-# Creating gens and loads for each neighbouring country -> not working yet
-create_gen_load_interconnections(BE_grid)
+folder_results = "/Users/giacomobastianel/Desktop/Results_Belgium/Simulations_one_year"
 
-# Creating power flow series for each interconnector, to be downloaded for each year by ENTSO-E TYNDP database
-power_flow_LU_BE,power_flow_BE_LU,power_flow_DE_BE,power_flow_BE_DE,power_flow_NL_BE,power_flow_BE_NL,power_flow_UK_BE,power_flow_BE_UK,power_flow_FR_BE,power_flow_BE_FR = create_interconnectors_power_flow(BE_grid)
-flow_BE_DE,flow_DE_BE,flow_UK_BE,flow_BE_UK,flow_LU_BE,flow_BE_LU,flow_NL_BE,flow_BE_NL,flow_FR_BE,flow_BE_FR = sanity_check(power_flow_DE_BE,power_flow_BE_DE,power_flow_UK_BE,power_flow_BE_UK,power_flow_LU_BE,power_flow_BE_LU,power_flow_NL_BE,power_flow_BE_NL,power_flow_FR_BE,power_flow_BE_FR,number_of_hours)
+results_base_case = JSON.parsefile(joinpath(folder_results,"one_year_BE.json"))
+results_ei = JSON.parsefile(joinpath(folder_results,"one_year_BE_EI.json"))
+results_vbdh = JSON.parsefile(joinpath(folder_results,"one_year_BE_vbdh.json"))
+results_vbdh_ei = JSON.parsefile(joinpath(folder_results,"one_year_BE_EI_vbdh.json"))
 
+obj_ = sum(results_base_case["$i"]["objective"] for i in 1:number_of_hours)*100
+obj_ei = sum(results_ei["$i"]["objective"] for i in 1:number_of_hours)*100
+obj_vbdh = sum(results_vbdh["$i"]["objective"] for i in 1:number_of_hours)*100
+obj_vbdh_ei = sum(results_vbdh_ei["$i"]["objective"] for i in 1:number_of_hours)*100
 
-# Adding the energy island
-BE_grid_energy_island = deepcopy(BE_grid)
-add_energy_island(BE_grid_energy_island)
+obj_vbdh/obj_
+obj_vbdh_ei/obj_ei
 
+# Computing the electricity prices
+obj_/sum(load_BE)
+obj_ei/sum(load_BE)
+obj_vbdh/sum(load_BE)
+obj_vbdh_ei/sum(load_BE)
 
-# Running the OPF for the base case
-number_of_hours = 168
-s = Dict("output" => Dict("branch_flows" => true), "conv_losses_mp" => true)
-results = hourly_opf_BE(BE_grid,number_of_hours,load_BE,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
-
-obj = []
-for (i_id,i) in results
-    push!(obj,i["objective"])
+# Function to compute the CO2 emissions
+function compute_CO2_emissions(grid,number_of_hours,results_dict,vector)
+    for i in 1:number_of_hours
+        sum_ = 0
+        for (g_id,g) in grid["gen"]
+            sum_ = sum_ + results_dict["$i"]["solution"]["gen"][g_id]["pg"]*g["C02_emission"]*100
+        end
+        push!(vector,sum_)
+    end
 end
 
+CO2_base_case = []
+CO2_ei = []
+CO2_vbdh = []
+CO2_vbdh_ei = []
 
+compute_CO2_emissions(BE_grid,8760,results_base_case,CO2_base_case)
+compute_CO2_emissions(BE_grid,8760,results_ei,CO2_ei)
+compute_CO2_emissions(BE_grid,8760,results_vbdh,CO2_vbdh)
+compute_CO2_emissions(BE_grid,8760,results_vbdh_ei,CO2_vbdh_ei)
 
-
+# Computing the total CO2 emission per case
+sum(CO2_base_case)
+sum(CO2_ei)
+sum(CO2_vbdh)
+sum(CO2_vbdh_ei)

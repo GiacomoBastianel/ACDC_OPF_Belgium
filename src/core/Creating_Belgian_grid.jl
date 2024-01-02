@@ -1,5 +1,6 @@
-## Script to create the Belgian Grid basing on publicly available data
-# Creating Belgian grid
+### Script to create the Belgian Grid based on publicly available data
+## The .json file is built in PowerModels format
+# Calling useful packages
 using XLSX
 using JSON
 using StringDistances
@@ -13,24 +14,31 @@ using CSV
 using DataFrames
 
 ##################################################################
-# Including other files
+# Including functions from files (using ACDC_OPF_Belgium command leads to errors for now)
 include(joinpath((@__DIR__,"build_grid_data.jl")))
 include(joinpath((@__DIR__,"load_data.jl")))
 
 ##################################################################
-
+# Calling files containing public data from Elia's website
 grid_data = joinpath(dirname(dirname(@__DIR__)),"public_data_Elia/Elia_static_grid_data.xlsx")
 gen_data = joinpath(dirname(dirname(@__DIR__)),"public_data_Elia/Generation_units_with_substations.xlsx")
 BE_grid_data = XLSX.readxlsx(grid_data)
 BE_gen_data = XLSX.readxlsx(gen_data)
 cities = CSV.read("/Users/giacomobastianel/Desktop/Lat_lon_cities_Belgium.csv",DataFrame)
 
+# Uploading one grid example
 folder_results = @__DIR__
 North_sea_grid_file = joinpath(dirname(dirname(@__DIR__)),"test_cases/toy_model_North_Sea.m")
 North_sea_grid = _PM.parse_file(North_sea_grid_file)
 _PMACDC.process_additional_data!(North_sea_grid)
 
+# Calling the grid again as a reserve
+base_case = joinpath(dirname(dirname(@__DIR__)),"test_cases/toy_model_North_Sea.m")
+data = _PM.parse_file(base_case)
+_PMACDC.process_additional_data!(data)
 
+
+# Creating a list of cities in Belgium to assign lat and lon afterwards
 Belgian_cities = Dict{String,Any}()
 for i in 1:2757
     Belgian_cities["$i"] = Dict{String,Any}()
@@ -40,12 +48,7 @@ for i in 1:2757
     Belgian_cities["$i"]["lon"] = cities[:,3][i]
 end
 
-base_case = joinpath(dirname(dirname(@__DIR__)),"test_cases/toy_model_North_Sea.m")
-
-## Here we are using the parser of Powermodels for convenience 
-data = _PM.parse_file(base_case)
-_PMACDC.process_additional_data!(data)
-
+# Isolating the data for the branches in the .xlsx files in single vectors
 XLSX.sheetnames(BE_grid_data)
 sub_1 = BE_grid_data["Line_data_20181231"]["A5:A97"]
 sub_1_full_name = BE_grid_data["Line_data_20181231"]["B5:B97"]
@@ -71,15 +74,19 @@ R_interconnection = BE_grid_data["Interconnections_data_20181231"]["I5:I16"]
 X_interconnection = BE_grid_data["Interconnections_data_20181231"]["J5:J16"]
 wC_interconnection = BE_grid_data["Interconnections_data_20181231"]["K5:K16"]
 
+# Creating a list of branches based on the vectors built above
 branches = Dict{String,Any}()
 for i in 1:93
     branches["$i"] = [sub_1[i],sub_2[i],sub_1_full_name[i],sub_2_full_name[i],U[i],"$(sub_1[i])"*"_"*"$(U[i])","$(sub_2[i])"*"_"*"$(U[i])","$(sub_1_full_name[i])"*"_"*"$(U[i])","$(sub_2_full_name[i])"*"_"*"$(U[i])"]
 end
+
+# Adding interconnections to the list of branches
 for i in 1:12
     l = 93 + i
     branches["$l"] = [sub_1_interconnection[i],sub_2_interconnection[i],sub_1_full_name_interconnection[i],sub_2_full_name_interconnection[i],U[i],"$(sub_1_interconnection[i])"*"_"*"$(U_interconnection[i])","$(sub_2_interconnection[i])"*"_"*"$(U_interconnection[i])","$(sub_1_full_name_interconnection[i])"*"_"*"$(U[i])","$(sub_2_full_name_interconnection[i])"*"_"*"$(U[i])"]
 end
 
+# Adding substations (buses) to the model by using the ones mentioned in the list of branches. Only the uniques names are kept
 substations = []
 substations_full_name = []
 for i in 1:105
@@ -95,6 +102,7 @@ for i in 1:73
     push!(unique_substations_full_name_no_kV,unique_substations_full_name[i][1:end-4])
 end
 
+# Adding interconnections buses to the list of buses
 unique_substations_no_interconnections = []
 for i in keys(unique_substations)
     if unique_substations[i][1:1] != "X"
@@ -102,7 +110,7 @@ for i in keys(unique_substations)
     end
 end
 
-
+# Isolating the data for the transformers in the .xlsx files in single vectors
 name = BE_grid_data["Transformer_data_20181231"]["A5:A71"]
 sub_1_trafo = BE_grid_data["Transformer_data_20181231"]["B5:B71"]
 sub_1_full_name_trafo = BE_grid_data["Transformer_data_20181231"]["C5:C71"]
@@ -139,12 +147,12 @@ for i in 1:67
     push!(sub_2_full_name_trafo_kV,"$(sub_1_full_name_trafo[i])"*"_"*"$(V2_trafo[i])")
 end
 
-# Computing the number of trafos/loads
+# Computing the number of trafos/loads (unique names)
 unique_sub_2_trafo_kV = unique(sub_2_trafo_kV)
 unique_sub_2_full_name_trafo_kV = unique(sub_2_full_name_trafo_kV)
 
 
-
+# Isolating the data for the generators in the .xlsx files in single vectors
 XLSX.sheetnames(BE_gen_data)
 owner = BE_gen_data["Sheet1"]["B2:B111"]
 power_plant_name = BE_gen_data["Sheet1"]["C2:C111"]
@@ -153,6 +161,7 @@ Pmax = BE_gen_data["Sheet1"]["E2:E111"]
 gen_type = BE_gen_data["Sheet1"]["F2:F111"]
 substation_full_name = BE_gen_data["Sheet1"]["G2:G111"]
 
+# Setting up the data dictionary in PowerModels format
 BE_data = Dict{String,Any}()
 BE_data["bus"] = Dict()
 BE_data["dcpol"] = 2 
@@ -173,7 +182,7 @@ BE_data["branchdc"] = Dict()
 BE_data["busdc"] = Dict()
 
 
-# This is good
+# Function to create list of buses
 function creating_bus_list(dict)
     for i in 1:79
         dict["$i"] = Dict()
@@ -197,7 +206,7 @@ function creating_bus_list(dict)
     dict["1"]["bus_type"] = 3
 end
 
-# This is good
+# Function to create list of generators
 function creating_gen_list(dict)
     for i in 1:110 # Number of generators -> 110
         dict["$i"] = deepcopy(data["gen"]["1"])
@@ -251,7 +260,7 @@ function creating_gen_list(dict)
     =#
 end
 
-# This is good
+# Function to add distributed RES generators to the grid (not present in data from Elia)
 function adding_onshore_wind_and_solar_pv_list(dict)
     installed_capacity_solar_pv = 6475 #MW
     installed_capacity_onshore_wind = 2990 #MW
@@ -292,10 +301,11 @@ function adding_onshore_wind_and_solar_pv_list(dict)
     end
 end
 
+# Computing the base pu impedance
 Z_base = (380*10^3)^2/(10^2*10^6)
 
 
-# This works
+# Function to create list of branches
 function creating_branch_list(dict)
     for i in 1:93 # Number of branches -> 93
         dict["$i"] = deepcopy(data["branch"]["1"])
@@ -384,6 +394,7 @@ function creating_branch_list(dict)
     end
 end
 
+# Function to create list of trafos -> adding buses
 function creating_trafos_list(dict,unique_short,unique_full)
     # Creating buses and calling them trafos
     for l in 1:48
@@ -410,8 +421,7 @@ function creating_trafos_list(dict,unique_short,unique_full)
     end
 end
 
-
-# This needs to be refined
+# Function to compute installed capacities for each type of power plant
 function compute_installed_capacities(grid)
     types = []
     for (i_id,i) in BE_grid_2022["gen"]
@@ -433,7 +443,7 @@ function compute_installed_capacities(grid)
     return installed_capacities
 end
 
-# This needs to be refined
+# Function to create list of loads
 function creating_load_list(dict)
     for i in 1:67
         dict["$i"] = Dict()
@@ -469,15 +479,11 @@ function creating_load_list(dict)
     end
 end
 
-
-# Need to add solar and onshore wind, offshore wind needs to be scaled
+# Creating list of buses
 creating_bus_list(BE_data["bus"])
 
-#for (b_id,b) in BE_data["bus"]
-#    print(b["base_kV"],".",b["full_name_kV"],"\n")
-#end
-
 # Assigning the full name of the substation to each bus (manual check later)
+# The name is assigned by comparing each name to the list of substation names and finding the name with the most similar name
 assigning_sub = Dict{String,Any}()
 assigning_full_sub = Dict{String,Any}()
 for (b_id,b) in BE_data["bus"]
@@ -520,6 +526,7 @@ end
 #    end
 #end
 
+# Manually adding correct full names
 BE_data["bus"]["78"]["full_name"] = "MASTAING"
 BE_data["bus"]["74"]["full_name"] = "MAASBRACHT"
 BE_data["bus"]["51"]["full_name"] = "HOUFFALIZE"
@@ -560,6 +567,7 @@ for i in 1:75
 end
 =#
 
+# Including two more names to the bus names (4 in total)
 for (b_id,b) in BE_data["bus"]
     b["name_no_kV"] = b["name"][1:end-4]
     b["full_name_kV"] = "$(b["full_name"])"*"$(b["name"][end-3:end])"
@@ -575,9 +583,10 @@ for (b_id,b) in BE_data["bus"]
     bus_names[b_id]["full_name"] = b["full_name"]
 end
 
-# Further refine the functions
+# Creating list of gens
 creating_gen_list(BE_data["gen"])
 
+# Preparing dictionaries to add gen bus names
 assigning_gen_sub = Dict{String,Any}()
 assigning_gen_full_sub = Dict{String,Any}()
 
@@ -586,7 +595,7 @@ for (b_id,b) in BE_data["gen"]
     assigning_gen_sub["$(b["substation"])"] = Dict{String,Any}()
 end
 
-# Comparing the name with the list of the substations full names, not only 27 I think, check
+# Comparing the name with the list of the substations full names
 for k in keys(assigning_gen_sub)
     assigning_gen_full_sub[k] = Dict{String,Any}()
     assigning_gen_full_sub[k]["compare"] = Dict{String,Any}()
@@ -595,7 +604,7 @@ for k in keys(assigning_gen_sub)
     end
 end
 
-# Assigning the names 
+# Assigning the names similarly to what done before with the buses
 for l in keys(assigning_gen_full_sub)
     #if findmax(assigning_gen_full_sub["$l"]["compare"])[1] >= 0.5
         assigning_gen_full_sub["$l"]["final_name"] = findmax(assigning_gen_full_sub["$l"]["compare"])
@@ -664,6 +673,7 @@ creating_branch_list(BE_data["branch"])
 # Trafos are fixed
 creating_trafos_list(BE_data["bus"],unique_sub_2_trafo_kV,unique_sub_2_full_name_trafo_kV)
 
+# Adding bracnhes to link the bus for the trafos to the transmission buses
 for l in 1:67
     i = l + 105
     BE_data["branch"]["$i"] = deepcopy(data["branch"]["1"])
@@ -701,6 +711,7 @@ for l in 1:67
     end
 end
 
+# Adding names to the newly created trafos
 for (br_id,br) in BE_data["branch"]
     for (b_id,b) in BE_data["bus"]
         if br["f_bus_name_kV"] == b["name"]
@@ -712,6 +723,7 @@ for (br_id,br) in BE_data["branch"]
     end
 end
 
+# Fixing some branches manually
 BE_data["branch"]["119"]["f_bus"] = 18
 BE_data["branch"]["120"]["f_bus"] = 18
 BE_data["branch"]["136"]["f_bus"] = 29
@@ -725,6 +737,7 @@ BE_data["branch"]["157"]["f_bus"] = 27
 BE_data["branch"]["158"]["f_bus"] = 27
 BE_data["branch"]["159"]["f_bus"] = 27
 
+# Adding bus names to the newly created branches
 for (br_id,br) in BE_data["branch"]
     for (b_id,b) in BE_data["bus"]
         if br["f_bus"] == b["index"]
@@ -760,21 +773,19 @@ end
 #    end
 #end
 ###################################################
-# Loads are fixed
+# Creating list of loads
 creating_load_list(BE_data["load"])
 
-# Adding the load buses
-#count_ = 0
+# Adding load buses to the loads
 for (l_id,l) in BE_data["load"]
     for (b_id,b) in BE_data["bus"]
         if l["name"] == b["name"]
-            #count_ += 1
             l["load_bus"] = deepcopy(b["index"])
         end
     end
 end
 
-# Add VOLL generators
+# Add VOLL generators to each bus (if load shedding happens, the active power set point of these generators is different from 0)
 for i in 370:(370+126)
     l = i - 369
     BE_data["gen"]["$i"] = deepcopy(BE_data["gen"]["1"])
@@ -787,6 +798,7 @@ for i in 370:(370+126)
     BE_data["gen"]["$i"]["source_id"][2] = i
 end
 
+# Adding some missing branches manually
 function adding_missing_branches()
     # Connecting the grid (some branches are missing and creating several subzones in the grid)
     # Trafo in Rimiere
@@ -868,7 +880,7 @@ end
 adding_missing_branches()
 
 
-# Assigning lat and lon -> first correct_ones, then correct_ones_kV [THE OTHERS MANUALLY, YES I KNOW but it helps to then build the model correctly]
+# Assigning lat and lon -> first correct_ones, then correct_ones_kV [THE OTHERS MANUALLY, it is tedious but it helps to then build the model correctly]
 cities_BE = Dict{String,Any}()
 for k in eachindex(BE_data["bus"])
     cities_BE[k] = Dict{String,Any}()
@@ -903,7 +915,6 @@ for k in 1:127
 end
 correct_ones_kV = [1,6,10,13,14,21,22,23,29,30,31,32,35,36,38,41,42,44,45,47,51,52,54,56,57,64,67,80,81,82,83,84,85,89,90,91,95,96,97,100,101,102,103,104,105,106,107,110,114,115,116,121,124,125,126,127]
 
-
 count_ = 0
 for k in correct_ones
     count_ += 1
@@ -916,7 +927,7 @@ for k in correct_ones_kV
     end
 end
 
-
+# Adding lat, lon and ZIP code for cities with the same name
 count_ = 0
 for (b_id,b) in BE_data["bus"]
     if !haskey(b,"lat")
@@ -933,6 +944,7 @@ for (b_id,b) in BE_data["bus"]
     end
 end
 
+# Adding lat and lon to the not assigned substations
 function adding_lat_lon()
     # Gramme (Huy)
     BE_data["bus"]["2"]["lon"]      = 5.2357453	
@@ -1263,6 +1275,7 @@ function adding_lat_lon()
 end
 adding_lat_lon()
 
+# Checking whether there are buses with no lat and lon
 for i in 1:127 
     if haskey(BE_data["bus"]["$i"],"lat")
         print(i,".",BE_data["bus"]["$i"]["full_name_kV"],".",BE_data["bus"]["$i"]["lat"],".",BE_data["bus"]["$i"]["lon"],"\n")
@@ -1271,10 +1284,10 @@ for i in 1:127
     end
 end
 
-
+# Assigning the gen types to the generators 
 types = []
 fuel_types = []
-# Assign the gen types to the generators 
+
 for (g_id,g) in BE_data["gen"]
     push!(types,g["gen_type"])
     push!(fuel_types,g["fuel_type"])
@@ -1333,6 +1346,7 @@ BE_data["branch"]["103"]["zone"] = "NL"
 BE_data["branch"]["104"]["zone"] = "FR"
 BE_data["branch"]["105"]["zone"] = "FR"
 
+# Fixing some resistances and reactances values
 BE_data["branch"]["43"]["br_r"] = BE_data["branch"]["43"]["br_r"]/10
 BE_data["branch"]["44"]["br_r"] = BE_data["branch"]["44"]["br_r"]/10
 BE_data["branch"]["52"]["br_r"] = BE_data["branch"]["52"]["br_r"]/10
@@ -1355,6 +1369,7 @@ for (g_id,g) in BE_data["gen"]
     end
 end
 
+# assigning the correct source_id to the loads
 for (l_id,l) in BE_data["load"]
     l["source_id"][2] = deepcopy(l["load_bus"])
 end
@@ -1363,7 +1378,7 @@ end
 gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx = gen_values()
 assigning_gen_values(BE_data)
 
-# Adding power portion out of the total for each load
+# Setting pmax for loads
 load_ = 0
 for (l_id,l) in BE_data["load"]
     l["pmax"] = deepcopy(l["pd"])
@@ -1378,6 +1393,7 @@ for (br_id,br) in BE_data["branch"]
     delete!(br,"c_rating_a")
 end
 
+# Using the same name parameters for each grid element
 for (b_id,b) in BE_data["bus"]
     b["name_kV"] = deepcopy(b["name"])
     b["name"] = deepcopy(b["name_no_kV"])
@@ -1388,19 +1404,22 @@ end
 json_string_data = JSON.json(BE_data)
 folder_results = @__DIR__
 
-# Create JSON file
+# Create JSON file to be saved (note that the grid is changed everytime one runs the script, as the distributed res generation is assigned randomly)
 open(joinpath(dirname(dirname(folder_results)),"test_cases/Belgian_transmission_grid_data_Elia_2023.json"),"w" ) do f
 write(f,json_string_data)
 end
 
-# From here on OPF simulations to check whether the OPF is feasible
+## From here on OPF simulations to check whether the OPF is feasible
+# Call the grid
 BE_grid_2022_file = joinpath(dirname(dirname(folder_results)),"test_cases/Belgian_transmission_grid_data_Elia_2023.json")
 BE_grid_2022 = _PM.parse_file(BE_grid_2022_file)
 
+# Run the AC/DC OPF
 s = Dict("output" => Dict("branch_flows" => true), "conv_losses_mp" => true)
 a = _PMACDC.run_acdcopf(BE_grid_2022, DCPPowerModel, Gurobi.Optimizer; setting = s)
 
 #=
+# Check the amount of VOLL in the system
 sum_VOLL = 0
 for i in 1:496
     if BE_grid_2022["gen"]["$i"]["gen_type"] == "VOLL"
@@ -1409,6 +1428,8 @@ for i in 1:496
     end
 end
 =#
+
+# Check the installed capacity for each type of generator
 compute_installed_capacities(BE_grid_2022)
 
 
