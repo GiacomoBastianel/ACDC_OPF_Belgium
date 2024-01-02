@@ -1308,12 +1308,6 @@ for (g_id,g) in BE_data["gen"]
     end
 end
 
-#=
-# Check the loads    
-for (b_id,b) in BE_data["load"]
-    print(b_id,".",b["name"],".",b["name_no_kV"],"\n")
-end
-=#
 
 ## Assigning some big loads
 # Van Eyck
@@ -1376,24 +1370,20 @@ for (l_id,l) in BE_data["load"]
     load_ = load_ + l["pd"]
 end
 
-# Fixing the br_r in the branches when it is == 0.0
-#count_ = 0
-#for (l_id,l) in BE_data["branch"]
-#    if l["br_r"] == 0.0
-#        l["br_r"] = 0.01
-#        l["b_fr"] = 0.01
-#        l["b_to"] = 0.01
-#    end
-#end
-
 # Adding the HVDC branches
 create_DC_grid_and_Nemo_and_Alegro_interconnections(BE_data)
-#fix_vmin_vmax(BE_data)
 
 # Removing this parameter which spoils the capacity of the branches somehow
 for (br_id,br) in BE_data["branch"]
     delete!(br,"c_rating_a")
 end
+
+for (b_id,b) in BE_data["bus"]
+    b["name_kV"] = deepcopy(b["name"])
+    b["name"] = deepcopy(b["name_no_kV"])
+    delete!(b,"name_no_kV")
+end
+
 
 json_string_data = JSON.json(BE_data)
 folder_results = @__DIR__

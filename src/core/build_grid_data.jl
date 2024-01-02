@@ -1494,12 +1494,3 @@ function add_energy_island(grid)
 
 end
 
-for (br_id,br) in BE_grid["branch"]
-    if br["f_bus"] == 26 || br["t_bus"] == 26
-        print(br_id,"\n")
-    end
-end
-BE_grid["branch"]["41"]
-
-    print([br_id,br["full_name_kV"]],"\n")
-end
