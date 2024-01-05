@@ -68,7 +68,13 @@ for i in 1:length(BE_data["branch"]) # number of AC branches
     push!(lat_to,BE_data["bus"]["$bus_to"]["lat"])
     push!(lon_to,BE_data["bus"]["$bus_to"]["lon"])
     push!(type_branch,0)
-    push!(overload,1.0)
+    if haskey(BE_data["branch"]["$i"],"base_kV") && BE_data["branch"]["$i"]["base_kV"] == 380 
+        push!(overload,1.0)
+    elseif haskey(BE_data["branch"]["$i"],"base_kV") && BE_data["branch"]["$i"]["base_kV"] > 219 && BE_data["branch"]["$i"]["base_kV"] < 350 
+        push!(overload, 0.3)
+    else
+        push!(overload, 0.1)
+    end
 end
 for i in 1:length(BE_data["branchdc"]) # number of DC branches
     push!(branches,BE_data["branchdc"]["$i"]["index"])

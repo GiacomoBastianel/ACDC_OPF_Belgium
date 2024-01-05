@@ -49,18 +49,6 @@ function compute_CO2_emissions(grid,number_of_hours,results_dict,vector)
     end
 end
 
-function compute_RES_generation(grid,number_of_hours,results_dict,vector)
-    for i in 1:number_of_hours
-        sum_ = 0
-        for (g_id,g) in grid["gen"]
-            if g["type"] == "Solar PV" || g["type"] == "Onshore Wind" || g["type"] == "Offshore Wind" 
-                sum_ = sum_ + results_dict["$i"]["solution"]["gen"][g_id]["pg"]*100
-            end
-        end
-        push!(vector,sum_)
-    end
-end
-
 function compute_gen_type(grid,result,type_gen) # type gen should come from a type in the ENTSO-E dataset
     _gen = 0
     for (g_id,g) in BE_grid["gen"]

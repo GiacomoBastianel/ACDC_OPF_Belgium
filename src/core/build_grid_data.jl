@@ -1154,7 +1154,23 @@ function create_ventilus(grid)
     n_branches = length(grid["branch"])
     grid["branch"]["$(n_branches+1)"] = deepcopy(grid["branch"]["1"])
     grid["branch"]["$(n_branches+1)"]["f_bus"] = 26
+    grid["branch"]["$(n_branches+1)"]["f_bus_name_kV"] = "GEZEL_380"
+    grid["branch"]["$(n_branches+1)"]["f_bus_name"] = "GEZEL"
+    grid["branch"]["$(n_branches+1)"]["f_bus_full_name_kV"] = "GEZELLE_380"
+    grid["branch"]["$(n_branches+1)"]["f_bus_full_name"] = "GEZELLE"
+    grid["branch"]["$(n_branches+1)"]["rate_a"] = 60.0
+    grid["branch"]["$(n_branches+1)"]["rate_b"] = 60.0
+    grid["branch"]["$(n_branches+1)"]["rate_c"] = 60.0
+    grid["branch"]["$(n_branches+1)"]["base_kV"] = 380
+    grid["branch"]["$(n_branches+1)"]["br_r"] = deepcopy(grid["branch"]["$(n_branches+1)"]["br_r"]/10)
+    grid["branch"]["$(n_branches+1)"]["br_x"] = deepcopy(grid["branch"]["$(n_branches+1)"]["br_x"]/10)
+
     grid["branch"]["$(n_branches+1)"]["t_bus"] = 10
+    grid["branch"]["$(n_branches+1)"]["t_bus_name_kV"] = "IZEGEM_380"
+    grid["branch"]["$(n_branches+1)"]["t_bus_name"] = "IZEGM"
+    grid["branch"]["$(n_branches+1)"]["t_bus_full_name_kV"] = "IZEGEM_380"
+    grid["branch"]["$(n_branches+1)"]["t_bus_full_name"] = "IZEGEM"
+
     grid["branch"]["$(n_branches+1)"]["index"] = n_branches+1
     grid["branch"]["$(n_branches+1)"]["source_id"][2] = n_branches+1
     # Substation names to be added
@@ -1170,7 +1186,33 @@ function create_boucle_du_hainaut(grid)
     grid["branch"]["$(n_branches+1)"]["t_bus"] = 13
     grid["branch"]["$(n_branches+1)"]["index"] = n_branches+1
     grid["branch"]["$(n_branches+1)"]["source_id"][2] = n_branches+1
+    grid["branch"]["$(n_branches+1)"]["f_bus_name_kV"] = "AVLGM_380"
+    grid["branch"]["$(n_branches+1)"]["f_bus_name"] = "AVLGM"
+    grid["branch"]["$(n_branches+1)"]["f_bus_full_name_kV"] = "AVELGEM_380"
+    grid["branch"]["$(n_branches+1)"]["f_bus_full_name"] = "AVELGEM"
+    grid["branch"]["$(n_branches+1)"]["rate_a"] = 60.0
+    grid["branch"]["$(n_branches+1)"]["rate_b"] = 60.0
+    grid["branch"]["$(n_branches+1)"]["rate_c"] = 60.0
+    grid["branch"]["$(n_branches+1)"]["base_kV"] = 380
+    grid["branch"]["$(n_branches+1)"]["br_r"] = deepcopy(grid["branch"]["$(n_branches+1)"]["br_r"]/10)
+    grid["branch"]["$(n_branches+1)"]["br_x"] = deepcopy(grid["branch"]["$(n_branches+1)"]["br_x"]/10)
+
     # Substation names to be added
+
+    # Increasing capacity existent lines between Avelgem and Izegem
+    grid["branch"]["7"]["rate_a"] = grid["branch"]["7"]["rate_a"]*8
+    grid["branch"]["8"]["rate_a"] = grid["branch"]["8"]["rate_a"]*8
+    grid["branch"]["7"]["br_r"] = deepcopy(grid["branch"]["7"]["br_r"]/10)
+    grid["branch"]["7"]["br_x"] = deepcopy(grid["branch"]["7"]["br_x"]/10)
+    grid["branch"]["8"]["br_r"] = deepcopy(grid["branch"]["8"]["br_r"]/10)
+    grid["branch"]["8"]["br_x"] = deepcopy(grid["branch"]["8"]["br_x"]/10)
+
+    grid["branch"]["10"]["rate_a"] = grid["branch"]["10"]["rate_a"]*2 
+    grid["branch"]["22"]["rate_a"] = grid["branch"]["22"]["rate_a"]*2 
+    grid["branch"]["23"]["rate_a"] = grid["branch"]["23"]["rate_a"]*2 
+    grid["branch"]["24"]["rate_a"] = grid["branch"]["24"]["rate_a"]*2 
+    grid["branch"]["25"]["rate_a"] = grid["branch"]["25"]["rate_a"]*2 
+    grid["branch"]["26"]["rate_a"] = grid["branch"]["26"]["rate_a"]*2 
 end
 
 
@@ -1298,11 +1340,11 @@ function add_energy_island(grid)
     grid["gen"]["502"] = deepcopy(grid["gen"]["60"])
     grid["gen"]["502"]["source_id"][2] = 502
     grid["gen"]["502"]["index"] = 502
-    #grid["gen"]["502"]["pmax"] = 21.0
-    #grid["gen"]["502"]["qmax"] = 3.0
-    #grid["gen"]["502"]["qmin"] = - 3.0
+    grid["gen"]["502"]["pmax"] = 21.0
+    grid["gen"]["502"]["qmax"] = 3.0
+    grid["gen"]["502"]["qmin"] = - 3.0
     #grid["gen"]["502"]["pd"] = 1.05
-    #grid["gen"]["502"]["installed_capacity"] = 99.0
+    grid["gen"]["502"]["installed_capacity"] = 21.0
     grid["gen"]["502"]["mbase"] = 100.0
     grid["gen"]["502"]["substation_short_name"] = "EI_AC_1"
     grid["gen"]["502"]["substation_short_name_kV"] = "EI_AC_1_220"
@@ -1316,11 +1358,11 @@ function add_energy_island(grid)
     grid["gen"]["503"] = deepcopy(grid["gen"]["60"])
     grid["gen"]["503"]["source_id"][2] = 503
     grid["gen"]["503"]["index"] = 503
-    #grid["gen"]["503"]["pmax"] = 14.0
-    #grid["gen"]["503"]["qmax"] = 3.0
-    #grid["gen"]["503"]["qmin"] = - 3.0
+    grid["gen"]["503"]["pmax"] = 14.0
+    grid["gen"]["503"]["qmax"] = 3.0
+    grid["gen"]["503"]["qmin"] = - 3.0
     #grid["gen"]["503"]["pd"] = 1.05
-    #grid["gen"]["503"]["installed_capacity"] = 99.0
+    grid["gen"]["503"]["installed_capacity"] = 14.0
     grid["gen"]["503"]["mbase"] = 100.0
     grid["gen"]["503"]["substation_short_name"] = "EI_AC_2"
     grid["gen"]["503"]["substation_short_name_kV"] = "EI_AC_2_220"
