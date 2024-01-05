@@ -21,7 +21,6 @@ include(joinpath((@__DIR__,"src/core/analysing_results.jl")))
 ## Processing input data
 folder_results = @__DIR__
 
-
 # Belgium grid without energy island
 BE_grid_file = joinpath(folder_results,"test_cases/Belgian_transmission_grid_data_Elia_2023.json")
 BE_grid = _PM.parse_file(BE_grid_file)
@@ -30,33 +29,23 @@ BE_grid_json = JSON.parsefile(BE_grid_file)
 _PMACDC.process_additional_data!(BE_grid)
 _PMACDC.process_additional_data!(BE_grid_json)
 
-# North sea grid backbone -> to be adjusted later
-North_sea_grid_file = joinpath(folder_results,"test_cases/North_Sea_zonal_model_with_generators.m")
-North_sea_grid = _PM.parse_file(North_sea_grid_file)
-_PMACDC.process_additional_data!(North_sea_grid)
+## Adding the energy island
+BE_grid_energy_island = deepcopy(BE_grid)
+add_energy_island(BE_grid_energy_island)
 
-# Example of a PowerModels.jl dictionary
-example_dc_grid_file = joinpath(folder_results,"test_cases/case5_acdc.m")
-example_dc_grid = _PM.parse_file(example_dc_grid_file)
-_PMACDC.process_additional_data!(example_dc_grid)
+# BE grid with Ventilus & Boucle-Du-Hainaut (Belgian scheduled grid reinforcements)
+BE_grid_vbdh = deepcopy(BE_grid)
+BE_grid_energy_island_vbdh = deepcopy(BE_grid_energy_island)
 
-##################################################################
-## Choosing the number of hours, scenario and climate year
-number_of_hours = 8760
-scenario = "DE2040"
-year = "1984"
-year_int = parse(Int64,year)
-
-##################################################################
-# Creating load series for Belgium from TYNDP data 
-load_series_BE_max = create_load_series(scenario,year,"BE00",1,number_of_hours)
-load_series_BE = load_series_BE_max
-load_BE = []
-for i in 1:length(load_series_BE)
-    push!(load_BE,load_series_BE[i])
+build_ventilus_and_boucle_du_hainaut_interconnections = true
+if build_ventilus_and_boucle_du_hainaut_interconnections == true
+    create_ventilus(BE_grid_vbdh)
+    create_boucle_du_hainaut(BE_grid_vbdh)
+    create_ventilus(BE_grid_energy_island_vbdh)
+    create_boucle_du_hainaut(BE_grid_energy_island_vbdh)
 end
 
-
+# Calling the desktop folder with the results
 folder_results = "/Users/giacomobastianel/Desktop/Results_Belgium/Simulations_one_year"
 
 results_base_case = JSON.parsefile(joinpath(folder_results,"one_year_BE.json"))

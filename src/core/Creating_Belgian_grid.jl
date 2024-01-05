@@ -24,7 +24,9 @@ grid_data = joinpath(dirname(dirname(@__DIR__)),"public_data_Elia/Elia_static_gr
 gen_data = joinpath(dirname(dirname(@__DIR__)),"public_data_Elia/Generation_units_with_substations.xlsx")
 BE_grid_data = XLSX.readxlsx(grid_data)
 BE_gen_data = XLSX.readxlsx(gen_data)
-cities = CSV.read("/Users/giacomobastianel/Desktop/Lat_lon_cities_Belgium.csv",DataFrame)
+
+# List of lat and lon for Belgian cities
+cities = CSV.read(joinpath(dirname(dirname(@__DIR__)),"public_data_Elia/Lat_lon_cities_Belgium.csv"),DataFrame)
 
 # Uploading one grid example
 folder_results = @__DIR__
@@ -74,7 +76,7 @@ R_interconnection = BE_grid_data["Interconnections_data_20181231"]["I5:I16"]
 X_interconnection = BE_grid_data["Interconnections_data_20181231"]["J5:J16"]
 wC_interconnection = BE_grid_data["Interconnections_data_20181231"]["K5:K16"]
 
-# Creating a list of branches based on the vectors built above
+# Creating a list of branches based on the vectors built above -> the length of the vectors is hardcoded
 branches = Dict{String,Any}()
 for i in 1:93
     branches["$i"] = [sub_1[i],sub_2[i],sub_1_full_name[i],sub_2_full_name[i],U[i],"$(sub_1[i])"*"_"*"$(U[i])","$(sub_2[i])"*"_"*"$(U[i])","$(sub_1_full_name[i])"*"_"*"$(U[i])","$(sub_2_full_name[i])"*"_"*"$(U[i])"]
@@ -303,7 +305,6 @@ end
 
 # Computing the base pu impedance
 Z_base = (380*10^3)^2/(10^2*10^6)
-
 
 # Function to create list of branches
 function creating_branch_list(dict)
@@ -880,7 +881,7 @@ end
 adding_missing_branches()
 
 
-# Assigning lat and lon -> first correct_ones, then correct_ones_kV [THE OTHERS MANUALLY, it is tedious but it helps to then build the model correctly]
+# Assigning lat and lon -> first correct_ones, then correct_ones_kV [THE OTHERS MANUALLY, it is tedious but it helps to then build the model correctly, ideally you build it only once]
 cities_BE = Dict{String,Any}()
 for k in eachindex(BE_data["bus"])
     cities_BE[k] = Dict{String,Any}()
@@ -1346,7 +1347,7 @@ BE_data["branch"]["103"]["zone"] = "NL"
 BE_data["branch"]["104"]["zone"] = "FR"
 BE_data["branch"]["105"]["zone"] = "FR"
 
-# Fixing some resistances and reactances values
+# Fixing some resistances and reactances values (out of scale)
 BE_data["branch"]["43"]["br_r"] = BE_data["branch"]["43"]["br_r"]/10
 BE_data["branch"]["44"]["br_r"] = BE_data["branch"]["44"]["br_r"]/10
 BE_data["branch"]["52"]["br_r"] = BE_data["branch"]["52"]["br_r"]/10
@@ -1385,7 +1386,7 @@ for (l_id,l) in BE_data["load"]
     load_ = load_ + l["pd"]
 end
 
-# Adding the HVDC branches
+# Adding the HVDC branches currently existing in the Belgian grid
 create_DC_grid_and_Nemo_and_Alegro_interconnections(BE_data)
 
 # Removing this parameter which spoils the capacity of the branches somehow
@@ -1401,20 +1402,20 @@ for (b_id,b) in BE_data["bus"]
 end
 
 
+# Create JSON file to be saved (note that the grid is changed everytime one runs the script, as the distributed res generation is assigned randomly)
 json_string_data = JSON.json(BE_data)
 folder_results = @__DIR__
 
-# Create JSON file to be saved (note that the grid is changed everytime one runs the script, as the distributed res generation is assigned randomly)
 open(joinpath(dirname(dirname(folder_results)),"test_cases/Belgian_transmission_grid_data_Elia_2023.json"),"w" ) do f
 write(f,json_string_data)
 end
 
 ## From here on OPF simulations to check whether the OPF is feasible
 # Call the grid
-BE_grid_2022_file = joinpath(dirname(dirname(folder_results)),"test_cases/Belgian_transmission_grid_data_Elia_2023.json")
-BE_grid_2022 = _PM.parse_file(BE_grid_2022_file)
+BE_grid_2023_file = joinpath(dirname(dirname(folder_results)),"test_cases/Belgian_transmission_grid_data_Elia_2023.json")
+BE_grid_2023 = _PM.parse_file(BE_grid_2022_file)
 
-# Run the AC/DC OPF
+# Run the AC/DC OPF to check whether the model is feasible
 s = Dict("output" => Dict("branch_flows" => true), "conv_losses_mp" => true)
 a = _PMACDC.run_acdcopf(BE_grid_2022, DCPPowerModel, Gurobi.Optimizer; setting = s)
 
@@ -1430,7 +1431,7 @@ end
 =#
 
 # Check the installed capacity for each type of generator
-compute_installed_capacities(BE_grid_2022)
+compute_installed_capacities(BE_grid_2023)
 
 
 

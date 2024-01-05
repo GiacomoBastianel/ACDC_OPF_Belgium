@@ -62,7 +62,7 @@ for i in 1:length(load_series_BE)
     push!(load_BE,load_series_BE[i])
 end
 
-# Adding "power_portion" to loads (percentage out of the total load), useful to distribute the total demand among each load 
+# Adding "power_portion" to loads (percentage out of the total load), useful to distribute the total demand among each load based on their pmax
 dimensioning_load(BE_grid)
 
 ###############################################################
@@ -74,12 +74,11 @@ create_gen_load_interconnections(BE_grid)
 power_flow_LU_BE,power_flow_BE_LU,power_flow_DE_BE,power_flow_BE_DE,power_flow_NL_BE,power_flow_BE_NL,power_flow_UK_BE,power_flow_BE_UK,power_flow_FR_BE,power_flow_BE_FR = create_interconnectors_power_flow(BE_grid)
 flow_BE_DE,flow_DE_BE,flow_UK_BE,flow_BE_UK,flow_LU_BE,flow_BE_LU,flow_NL_BE,flow_BE_NL,flow_FR_BE,flow_BE_FR = sanity_check(power_flow_DE_BE,power_flow_BE_DE,power_flow_UK_BE,power_flow_BE_UK,power_flow_LU_BE,power_flow_BE_LU,power_flow_NL_BE,power_flow_BE_NL,power_flow_FR_BE,power_flow_BE_FR,number_of_hours)
 
-
 ## Adding the energy island
 BE_grid_energy_island = deepcopy(BE_grid)
 add_energy_island(BE_grid_energy_island)
 
-# BE grid with Ventilus & Boucle-Du-Hainaut (Belgian grid reinforcements)
+# BE grid with Ventilus & Boucle-Du-Hainaut (Belgian scheduled grid reinforcements)
 BE_grid_vbdh = deepcopy(BE_grid)
 BE_grid_energy_island_vbdh = deepcopy(BE_grid_energy_island)
 
@@ -95,12 +94,14 @@ end
 number_of_hours = 8760
 s = Dict("output" => Dict("branch_flows" => true), "conv_losses_mp" => true)
 
+# Checking whether the test case is feasible
 result = _PMACDC.run_acdcopf(BE_grid,DCPPowerModel,gurobi; setting = s)
 
-# Calling a result folder in the Desktop
+# Calling a result folder in the Desktop -> the files with the results are to heavy to be uploaded on Github
 folder_results = "/Users/giacomobastianel/Desktop/Results_Belgium/Simulations_one_year"
 
-# Belgian grid 
+
+# Belgian grid without energy island and reinforcements
 results = hourly_opf_BE(BE_grid,number_of_hours,load_BE,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
 
 json_string_grid = JSON.json(results)
@@ -134,7 +135,7 @@ end
 
 
 # Further analyses
-# Adding the b_fr to a vector
+# Adding the b_fr to a vector for easier debugging
 values_b = []
 for i in 1:length(BE_grid_energy_island_vbdh["branch"])
     print(calc_branch_y(BE_grid_energy_island_vbdh["branch"]["$i"]),"\n")
@@ -161,5 +162,6 @@ function print_branches_details(result,grid,number_of_hours)
     end
 end
 
-print_branches_details(results_vbdh_ei,BE_grid_energy_island_vbdh,2)
+# Print details only for one hour
+print_branches_details(results_vbdh_ei,BE_grid_energy_island_vbdh,1)
 
