@@ -311,7 +311,7 @@ function creating_branch_list(dict)
     for i in 1:93 # Number of branches -> 93
         dict["$i"] = deepcopy(data["branch"]["1"])
         dict["$i"]["br_r"] = deepcopy(R[i]/Z_base)#*100
-        dict["$i"]["rate_a"] = deepcopy((I_nom[i]*U[i]*10^3)/(BE_data["baseMVA"]*10^6))
+        dict["$i"]["rate_a"] = deepcopy((sqrt(3)*I_nom[i]*U[i]*10^3)/(BE_data["baseMVA"]*10^6))
         dict["$i"]["source_id"][2] = i
         dict["$i"]["rate_b"] = deepcopy(dict["$i"]["rate_a"])
         dict["$i"]["rate_c"] = deepcopy(dict["$i"]["rate_a"])
@@ -340,7 +340,7 @@ function creating_branch_list(dict)
         l = i + 93
         dict["$l"] = deepcopy(data["branch"]["1"])
         dict["$l"]["br_r"] = deepcopy(R_interconnection[i]/Z_base)#*100
-        dict["$l"]["rate_a"] = deepcopy((I_nom_interconnection[i]*U_interconnection[i]*10^3)/(BE_data["baseMVA"]*10^6))
+        dict["$l"]["rate_a"] = deepcopy((sqrt(3)*I_nom_interconnection[i]*U_interconnection[i]*10^3)/(BE_data["baseMVA"]*10^6))
         dict["$l"]["source_id"][2] = l
         dict["$l"]["rate_b"] = deepcopy(dict["$l"]["rate_a"])
         dict["$l"]["rate_c"] = deepcopy(dict["$l"]["rate_a"])

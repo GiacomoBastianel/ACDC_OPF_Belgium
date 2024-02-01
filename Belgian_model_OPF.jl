@@ -28,6 +28,22 @@ BE_grid_file = joinpath(folder_results,"test_cases/Belgian_transmission_grid_dat
 BE_grid = _PM.parse_file(BE_grid_file)
 BE_grid_json = JSON.parsefile(BE_grid_file)
 
+# If something needs to be corrected
+#=
+for (br_id,br) in BE_grid["branch"]
+    br["rate_a"] = br["rate_a"]*sqrt(3)
+    br["rate_b"] = br["rate_b"]*sqrt(3)
+    br["rate_c"] = br["rate_c"]*sqrt(3)
+end
+
+json_string_data = JSON.json(BE_grid)
+folder_results = @__DIR__
+
+open(joinpath(folder_results,"test_cases/Belgian_transmission_grid_data_Elia_2023.json"),"w" ) do f
+write(f,json_string_data)
+end
+=#
+
 _PMACDC.process_additional_data!(BE_grid)
 _PMACDC.process_additional_data!(BE_grid_json)
 
@@ -97,5 +113,8 @@ for (i_id,i) in results
 end
 
 
+for (b_id,b) in BE_grid["bus"]
+    print([b_id,b["full_name_kV"]],"\n")
+end
 
-
+BE_grid["bus"]["26"]

@@ -1425,7 +1425,7 @@ function add_energy_island(grid)
     grid["busdc"]["5"]["busdc_i"] = 5
     grid["busdc"]["5"]["source_id"][2] = 5
     grid["busdc"]["5"]["index"] = 5
-    grid["busdc"]["5"]["lat"] = 51.6468
+    grid["busdc"]["5"]["lat"] = 51.6468 
     grid["busdc"]["5"]["lon"] = 2.778687 
     grid["busdc"]["5"]["full_name"] = "EI_DC_1"
     grid["busdc"]["5"]["full_name_kV"] = "EI_DC_1_525"
