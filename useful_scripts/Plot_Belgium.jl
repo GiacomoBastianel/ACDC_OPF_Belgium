@@ -6,13 +6,14 @@ using DataFrames
 ##############################################
 BE_data = deepcopy(BE_grid)
 ##############################################
+file_pdf = "BE_grid_fixing.pdf"
 
 nodes = [] # vector for the buses
 lat = [] # vector for the latitude of the buses
 lon = [] # vector for the longitude of the buses
 type = [] # to differentiate the bus type (AC or DC)
 count_ = 0
-for i in 1:131 # number of ac buses here
+for i in 1:132 # number of ac buses here
     print(i,"\n")
     if haskey(BE_data["bus"]["$i"],"lat")
         push!(nodes,BE_data["bus"]["$i"]["index"])
@@ -21,7 +22,7 @@ for i in 1:131 # number of ac buses here
         push!(type,0)
     end
 end    
-for i in 1:8 # number of dc buses here
+for i in 1:4 # number of dc buses here
     print(i,"\n")
     if haskey(BE_data["busdc"]["$i"],"lat")
         push!(nodes,BE_data["busdc"]["$i"]["index"])
@@ -42,7 +43,7 @@ rate_a = [] # rating of the line
 type_branch = [] # AC or DC
 overload = [] # this is the vector that allows to plot different overloading conditions for different branches in the grid 
 
-for i in 1:183 # number of AC branches
+for i in 1:188 # number of AC branches
     push!(branches,BE_data["branch"]["$i"]["index"])
     push!(bus_fr_,BE_data["branch"]["$i"]["f_bus"])
     push!(bus_to_,BE_data["branch"]["$i"]["t_bus"])
@@ -56,7 +57,7 @@ for i in 1:183 # number of AC branches
     push!(type_branch,0)
     push!(overload,1.0)
 end
-for i in 1:6 # number of DC branches
+for i in 1:2 # number of DC branches
     push!(branches,BE_data["branchdc"]["$i"]["index"])
     push!(bus_fr_,BE_data["branchdc"]["$i"]["fbusdc"])
     push!(bus_to_,BE_data["branchdc"]["$i"]["tbusdc"])
@@ -138,9 +139,11 @@ showlegend = false,
 #legend = PlotlyJS.attr(x=0,y = 0.95,font=PlotlyJS.attr(size=25*txt_x),bgcolor= "#1C00ff00"),
 margin=PlotlyJS.attr(l=0, r=0, t=0, b=0))
 #display plot
+
+folder_results = "/Users/giacomobastianel/Desktop/Results_Belgium/Figures"
+
+#display plot
 #PlotlyJS.plot(trace, layout)
-PlotlyJS.savefig(PlotlyJS.plot(trace, layout), joinpath("INSERT PATH"))
-#PlotlyJS.savefig(PlotlyJS.plot(trace, layout), joinpath(folder_results,folder,"Figures_"*"$case","$hour"*".png"))
-#savefig(PlotlyJS.plot(trace, layout), ".png")
+PlotlyJS.savefig(PlotlyJS.plot(trace, layout), joinpath(folder_results,file_pdf))
 
 

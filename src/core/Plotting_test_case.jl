@@ -4,12 +4,12 @@ using DataFrames
 
 # INSERT HERE THE LINK TO THE GRID MODEL (run first the comparing_grids.jl script)
 ##############################################
-#BE_data = deepcopy(BE_grid)
+BE_data = deepcopy(BE_grid)
 #BE_data = deepcopy(BE_grid_energy_island)
 #BE_data = deepcopy(BE_grid_vbdh)
-BE_data = deepcopy(BE_grid_energy_island_vbdh)
+#BE_data = deepcopy(BE_grid_energy_island_vbdh)
 
-file_pdf = "BE_grid_EI_vbdh.pdf"
+file_pdf = "BE_grid_fixing_.pdf"
 
 if length(BE_data["busdc"]) > 4
     BE_data["busdc"]["6"]["lon"] = 2.85
@@ -20,6 +20,7 @@ nodes = [] # vector for the buses
 lat = [] # vector for the latitude of the buses
 lon = [] # vector for the longitude of the buses
 type = [] # to differentiate the bus type (AC or DC)
+
 count_ = 0
 for i in 1:length(BE_data["bus"]) # number of ac buses here
     print(i,"\n")

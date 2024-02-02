@@ -28,6 +28,7 @@ BE_grid_file = joinpath(folder_results,"test_cases/Belgian_transmission_grid_dat
 BE_grid = _PM.parse_file(BE_grid_file)
 BE_grid_json = JSON.parsefile(BE_grid_file)
 
+
 # If something needs to be corrected
 #=
 for (br_id,br) in BE_grid["branch"]
@@ -117,4 +118,20 @@ for (b_id,b) in BE_grid["bus"]
     print([b_id,b["full_name_kV"]],"\n")
 end
 
-BE_grid["bus"]["26"]
+BE_grid["bus"]["1"]
+BE_grid["bus"]["2"]
+BE_grid["bus"]["3"]
+BE_grid["bus"]["4"]
+
+BE_grid["busdc"]["4"]
+BE_grid["bus"]["129"]
+
+count_ = 0
+br_ids = []
+for (br_id,br) in BE_grid["branch"]
+    if haskey(br,"interconnection") && br["interconnection"] == true
+        count_ += 1
+        push!(br_ids,br_id)
+    end
+end
+

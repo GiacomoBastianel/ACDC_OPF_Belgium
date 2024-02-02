@@ -1375,6 +1375,36 @@ for (l_id,l) in BE_data["load"]
     l["source_id"][2] = deepcopy(l["load_bus"])
 end
 
+
+BE_data["bus"]["18"]["lat"] = 50.514669
+BE_data["bus"]["18"]["lon"] = 4.906753
+
+# Fixing ST-AMAND first (bottom to a bit higher)
+BE_data["bus"]["19"]["lat"] = 50.506284
+BE_data["bus"]["19"]["lon"] = 4.551047
+
+BE_data["bus"]["43"]["lat"] = 49.978717
+BE_data["bus"]["43"]["lon"] = 5.657869
+
+BE_data["bus"]["76"]["lat"] = 51.410588
+BE_data["bus"]["76"]["lon"] = 3.869445
+
+BE_data["bus"]["37"]["lat"] = 51.120833
+BE_data["bus"]["37"]["lon"] = 5.774167
+
+BE_data["bus"]["124"]["lat"] = 49.978717
+BE_data["bus"]["124"]["lon"] = 5.657869
+
+BE_data["bus"]["125"]["lat"] = 49.978717
+BE_data["bus"]["125"]["lon"] = 5.657869
+
+BE_data["bus"]["68"]["lat"] = 50.1042
+BE_data["bus"]["68"]["lon"] = 4.8078
+
+BE_data["bus"]["15"]["lat"] = 50.386667
+BE_data["bus"]["15"]["lon"] = 5.857222
+
+
 # Adding and assigning generator values
 gen_costs,inertia_constants,emission_factor_CO2,start_up_cost,emission_factor_NOx,emission_factor_SOx = gen_values()
 assigning_gen_values(BE_data)
