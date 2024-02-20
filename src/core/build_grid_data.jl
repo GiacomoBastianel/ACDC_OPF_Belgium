@@ -1101,7 +1101,7 @@ function fix_RES_time_series(grid,hour,wind_onshore_series,wind_offshore_series,
             g["pmax"] = g["installed_capacity"]*wind_onshore_series[hour] #pu
         elseif g["type"] == "Offshore Wind" 
             g["pmax"] = g["installed_capacity"]*wind_offshore_series[hour] #pu
-        elseif g["type"] == "Onshore Wind" 
+        elseif g["type"] == "Solar PV" 
             g["pmax"] = g["installed_capacity"]*solar_pv_series[hour] #pu
         end
     end
@@ -1110,8 +1110,8 @@ end
 function hourly_opf_BE(grid,number_of_hours,load_series_BE,wind_onshore, wind_offshore, solar_pv)
     results = Dict()
     grid_hour = Dict()
-    hourly_grid = deepcopy(grid)
     for hour in 1:number_of_hours
+        hourly_grid = deepcopy(grid)
         #fix_load_BE(hourly_grid,load_series_BE,hour)
         for (l_id,l) in hourly_grid["load"]
             if !haskey(l,"neighbouring")
@@ -1536,3 +1536,269 @@ function add_energy_island(grid)
 
 end
 
+
+function add_energy_island_synthetic_network(grid)
+    # 132 buses before the energy island
+    # Add Energy island #1 AC bus
+    grid["bus"]["133"] = deepcopy(grid["bus"]["1"])
+    grid["bus"]["133"]["bus_i"] = 133
+    grid["bus"]["133"]["bus_type"] = 2
+    grid["bus"]["133"]["source_id"][2] = 133
+    grid["bus"]["133"]["index"] = 133
+    grid["bus"]["133"]["lat"] = 51.646504
+    grid["bus"]["133"]["lon"] = 2.678687 
+    grid["bus"]["133"]["full_name"] = "EI_AC_1"
+    grid["bus"]["133"]["full_name_kV"] = "EI_AC_1_220"
+    grid["bus"]["133"]["name"] = "EI_AC_1_220"
+    grid["bus"]["133"]["name_no_kV"] = "EI_AC_1"
+    grid["bus"]["133"]["zone"] = "BE01"
+
+    #=
+    # Add Energy island #2 AC bus
+    grid["bus"]["133"] = deepcopy(grid["bus"]["2"])
+    grid["bus"]["133"]["bus_i"] = 128
+    grid["bus"]["133"]["source_id"][2] = 128
+    grid["bus"]["133"]["index"] = 128
+    grid["bus"]["133"]["lat"] = 51.2965
+    grid["bus"]["133"]["lon"] = 1.3192
+    grid["bus"]["133"]["full_name"] = "EI_AC_1"
+    grid["bus"]["133"]["full_name_kV"] = "EI_AC_1_220"
+    grid["bus"]["133"]["name"] = "EI_AC_1_220"
+    grid["bus"]["133"]["name_no_kV"] = "EI_AC_1"
+    grid["bus"]["133"]["zone"] = "BE01"
+    =#
+
+    # Add Energy island #3 AC bus
+    grid["bus"]["134"] = deepcopy(grid["bus"]["1"])
+    grid["bus"]["134"]["bus_i"] = 134
+    grid["bus"]["134"]["bus_type"] = 2
+    grid["bus"]["134"]["source_id"][2] = 134
+    grid["bus"]["134"]["index"] = 134
+    grid["bus"]["134"]["lat"] = 51.646504
+    grid["bus"]["134"]["lon"] = 2.678687 
+    grid["bus"]["134"]["full_name"] = "EI_AC_2"
+    grid["bus"]["134"]["full_name_kV"] = "EI_AC_2_220"
+    grid["bus"]["134"]["name"] = "EI_AC_2_220"
+    grid["bus"]["134"]["name_no_kV"] = "EI_AC_2"
+    grid["bus"]["134"]["zone"] = "BE01"
+
+    #=
+    # Add Energy island #4 AC bus
+    grid["bus"]["133"] = deepcopy(grid["bus"]["2"])
+    grid["bus"]["133"]["bus_i"] = 128
+    grid["bus"]["133"]["source_id"][2] = 128
+    grid["bus"]["133"]["index"] = 128
+    grid["bus"]["133"]["lat"] = 51.2965
+    grid["bus"]["133"]["lon"] = 1.3192
+    grid["bus"]["133"]["full_name"] = "EI_AC_1"
+    grid["bus"]["133"]["full_name_kV"] = "EI_AC_1_220"
+    grid["bus"]["133"]["name"] = "EI_AC_1_220"
+    grid["bus"]["133"]["name_no_kV"] = "EI_AC_1"
+    grid["bus"]["133"]["zone"] = "BE01"
+    =#
+
+    
+    # Assigning gens energy island
+    # Assigning loads energy island
+    grid["gen"]["101"] = deepcopy(grid["gen"]["29"])
+    grid["gen"]["101"]["source_id"][2] = 101
+    grid["gen"]["101"]["index"] = 101
+    grid["gen"]["101"]["pmax"] = 21.0
+    grid["gen"]["101"]["qmax"] = 3.0
+    grid["gen"]["101"]["qmin"] = - 3.0
+    #grid["gen"]["502"]["pd"] = 1.05
+    grid["gen"]["101"]["installed_capacity"] = 21.0
+    grid["gen"]["101"]["mbase"] = 100.0
+    grid["gen"]["101"]["substation_short_name"] = "EI_AC_1"
+    grid["gen"]["101"]["substation_short_name_kV"] = "EI_AC_1_220"
+    grid["gen"]["101"]["substation_full_name"] = "EI_AC_1"
+    grid["gen"]["101"]["substation_full_name_kV"] = "EI_AC_1_220"
+    grid["gen"]["101"]["substation"] = "EI_AC_1_220"
+    grid["gen"]["101"]["name"] = "OFW_EI_AC"
+    grid["gen"]["101"]["gen_bus"] = 133
+    grid["gen"]["101"]["zone"] = "BE00"
+
+    grid["gen"]["102"] = deepcopy(grid["gen"]["29"])
+    grid["gen"]["102"]["source_id"][2] = 102
+    grid["gen"]["102"]["index"] = 102
+    grid["gen"]["102"]["pmax"] = 14.0
+    grid["gen"]["102"]["qmax"] = 3.0
+    grid["gen"]["102"]["qmin"] = - 3.0
+    #grid["gen"]["503"]["pd"] = 1.05
+    grid["gen"]["102"]["installed_capacity"] = 14.0
+    grid["gen"]["102"]["mbase"] = 100.0
+    grid["gen"]["102"]["substation_short_name"] = "EI_AC_2"
+    grid["gen"]["102"]["substation_short_name_kV"] = "EI_AC_2_220"
+    grid["gen"]["102"]["substation_full_name"] = "EI_AC_2"
+    grid["gen"]["102"]["substation_full_name_kV"] = "EI_AC_2_220"
+    grid["gen"]["102"]["substation"] = "EI_AC_2_220"
+    grid["gen"]["102"]["name"] = "OFW_EI_HVDC"
+    grid["gen"]["102"]["gen_bus"] = 134
+    grid["gen"]["102"]["zone"] = "BE00"
+
+    # Adding branches to the energy island
+    n_branches = 100
+    for i in 1:7
+        grid["branch"]["$(n_branches+i)"] = deepcopy(BE_grid["branch"]["1"])
+        grid["branch"]["$(n_branches+i)"]["source_id"][2] = deepcopy(n_branches+i)
+        grid["branch"]["$(n_branches+i)"]["interconnection"] = true
+        grid["branch"]["$(n_branches+i)"]["index"] = deepcopy(n_branches+i)
+        grid["branch"]["$(n_branches+i)"]["rate_a"] = 4.0
+        delete!(grid["branch"]["$(n_branches+i)"],"f_bus_name_kV")
+        delete!(grid["branch"]["$(n_branches+i)"],"t_bus_name_kV")
+        delete!(grid["branch"]["$(n_branches+i)"],"f_bus_full_name_kV")
+        delete!(grid["branch"]["$(n_branches+i)"],"t_bus_full_name_kV")
+        delete!(grid["branch"]["$(n_branches+i)"],"f_bus_full_name")
+        delete!(grid["branch"]["$(n_branches+i)"],"t_bus_full_name")
+        delete!(grid["branch"]["$(n_branches+i)"],"f_bus_name")
+        delete!(grid["branch"]["$(n_branches+i)"],"t_bus_name")
+    end
+    # Add values from ELIA here
+    # AC connections to BE
+    for i in 1:6
+        grid["branch"]["$(n_branches+i)"]["f_bus"] = 133 # EI_AC_1_220
+        grid["branch"]["$(n_branches+i)"]["t_bus"] = 26 # GEZELLE_380 
+        grid["branch"]["$(n_branches+i)"]["f_bus_full_name_kV"] = "EI_AC_1_220"
+        grid["branch"]["$(n_branches+i)"]["f_bus_name_kV"] = "EI_AC_1_220"
+        grid["branch"]["$(n_branches+i)"]["f_bus_full_name"] = "EI_AC_1"
+        grid["branch"]["$(n_branches+i)"]["f_bus_name"] = "EI_AC_1"
+        grid["branch"]["$(n_branches+i)"]["t_bus_full_name_kV"] = "GEZELLE_380"
+        grid["branch"]["$(n_branches+i)"]["t_bus_name_kV"] = "GEZEL_380"
+        grid["branch"]["$(n_branches+i)"]["t_bus_full_name"] = "GEZELLE"
+        grid["branch"]["$(n_branches+i)"]["t_bus_name"] = "GEZEL"
+    end
+    # AC connections withing the energy island -> this is the switch
+    for i in 7:7
+        grid["branch"]["$(n_branches+i)"]["rate_a"] = 99.99
+        grid["branch"]["$(n_branches+i)"]["ZIL"] = true
+        grid["branch"]["$(n_branches+i)"]["f_bus"] = 133 # EI_AC_1_220
+        grid["branch"]["$(n_branches+i)"]["t_bus"] = 134 # EI_AC_2_220 
+        grid["branch"]["$(n_branches+i)"]["f_bus_full_name_kV"] = "EI_AC_1_220"
+        grid["branch"]["$(n_branches+i)"]["f_bus_name_kV"] = "EI_AC_1_220"
+        grid["branch"]["$(n_branches+i)"]["f_bus_full_name"] = "EI_AC_1"
+        grid["branch"]["$(n_branches+i)"]["f_bus_name"] = "EI_AC_1"
+        grid["branch"]["$(n_branches+i)"]["t_bus_full_name_kV"] = "EI_AC_2_220"
+        grid["branch"]["$(n_branches+i)"]["t_bus_name_kV"] = "EI_AC_2_220"
+        grid["branch"]["$(n_branches+i)"]["t_bus_full_name"] = "EI_AC_2"
+        grid["branch"]["$(n_branches+i)"]["t_bus_name"] = "EI_AC_2"
+    end
+
+    ############## DC part ##################
+    # 4 DC buses before the energy island (ALEGRO not in the synthetic grid)
+    # Add Energy island #1 DC bus
+    grid["busdc"]["5"] = deepcopy(grid["busdc"]["1"])
+    grid["busdc"]["5"]["busdc_i"] = 5
+    grid["busdc"]["5"]["source_id"][2] = 5
+    grid["busdc"]["5"]["index"] = 5
+    grid["busdc"]["5"]["lat"] = 51.6468 
+    grid["busdc"]["5"]["lon"] = 2.778687 
+    grid["busdc"]["5"]["full_name"] = "EI_DC_1"
+    grid["busdc"]["5"]["full_name_kV"] = "EI_DC_1_525"
+    grid["busdc"]["5"]["name"] = "EI_DC_1_525"
+    grid["busdc"]["5"]["name_no_kV"] = "EI_DC_1"
+    grid["busdc"]["5"]["zone"] = "BE01"
+    grid["busdc"]["5"]["basekVdc"] = 525
+
+    # Add Energy island #2 DC bus (DC switchyard)
+    grid["busdc"]["6"] = deepcopy(grid["busdc"]["1"])
+    grid["busdc"]["6"]["busdc_i"] = 6
+    grid["busdc"]["6"]["source_id"][2] = 6
+    grid["busdc"]["6"]["index"] = 6
+    grid["busdc"]["6"]["lat"] = 51.780669
+    grid["busdc"]["6"]["lon"] = 3.006469
+    grid["busdc"]["6"]["full_name"] = "EI_DC_1"
+    grid["busdc"]["6"]["full_name_kV"] = "EI_DC_1_525"
+    grid["busdc"]["6"]["name"] = "EI_DC_1_525"
+    grid["busdc"]["6"]["name_no_kV"] = "EI_DC_1"
+    grid["busdc"]["6"]["zone"] = "BE01"
+    grid["busdc"]["6"]["basekVdc"] = 525
+
+    # Add UK #2 DC bus -> for later
+    #grid["busdc"]["7"] = deepcopy(grid["busdc"]["1"])
+    #grid["busdc"]["7"]["busdc_i"] = 7
+    #grid["busdc"]["7"]["source_id"][2] = 7
+    #grid["busdc"]["7"]["index"] = 7
+    #grid["busdc"]["7"]["lat"] = 51.888354
+    #grid["busdc"]["7"]["lon"] = 1.209372
+    #grid["busdc"]["7"]["full_name"] = "UK_EI_DC_2"
+    #grid["busdc"]["7"]["full_name_kV"] = "UK_EI_DC_2_525"
+    #grid["busdc"]["7"]["name"] = "UK_EI_DC_2_525"
+    #grid["busdc"]["7"]["name_no_kV"] = "UK_EI_DC_2"
+    #grid["busdc"]["7"]["zone"] = "BE01"
+    #grid["busdc"]["7"]["basekVdc"] = 525
+
+    # Add Gezelle DC bus
+    grid["busdc"]["8"] = deepcopy(grid["busdc"]["1"])
+    grid["busdc"]["8"]["busdc_i"] = 8
+    grid["busdc"]["8"]["source_id"][2] = 8
+    grid["busdc"]["8"]["index"] = 8
+    grid["busdc"]["8"]["lat"] = 51.2747
+    grid["busdc"]["8"]["lon"] = 3.22923
+    grid["busdc"]["8"]["full_name"] = "GEZELLE_EI_DC_1"
+    grid["busdc"]["8"]["full_name_kV"] = "GEZELLE_EI_DC_1_525"
+    grid["busdc"]["8"]["name"] = "GEZEL_EI_DC_1_525"
+    grid["busdc"]["8"]["name_no_kV"] = "GEZEL_EI_DC_1"
+    grid["busdc"]["8"]["zone"] = "BE01"
+    grid["busdc"]["8"]["basekVdc"] = 525
+
+    # Adding 3 converters for the energy island
+    n_conv_dc = 4
+    for i in 1:3
+        grid["convdc"]["$(n_conv_dc+i)"] = deepcopy(grid["convdc"]["1"])
+        grid["convdc"]["$(n_conv_dc+i)"]["Imax"] = 2.5
+        grid["convdc"]["$(n_conv_dc+i)"]["source_id"][2] = deepcopy(n_conv_dc+i)
+        grid["convdc"]["$(n_conv_dc+i)"]["index"] = deepcopy(n_conv_dc+i)
+    end
+
+    grid["convdc"]["5"]["busdc_i"] = 5
+    grid["convdc"]["5"]["busac_i"] = 134
+    grid["convdc"]["5"]["Pacmax"] = 20.0
+    grid["convdc"]["5"]["Pacmin"] = - 20.0
+    grid["convdc"]["5"]["Pacrated"] = 20.0
+
+    # For later
+    #grid["convdc"]["6"]["busdc_i"] = 7
+    #grid["convdc"]["6"]["busac_i"] = 128
+    #grid["convdc"]["6"]["Pacmax"] = 14.0
+    #grid["convdc"]["6"]["Pacmin"] = - 14.0
+    #grid["convdc"]["6"]["Pacrated"] = 14.0
+
+    grid["convdc"]["7"]["busdc_i"] = 8
+    grid["convdc"]["7"]["busac_i"] = 26
+    grid["convdc"]["7"]["Pacmax"] = 20.0
+    grid["convdc"]["7"]["Pacmin"] = - 20.0
+    grid["convdc"]["7"]["Pacrated"] = 20.0
+
+    # Adding the DC branches
+    n_branch_dc = 2
+    for i in 1:3
+        grid["branchdc"]["$(n_branch_dc+i)"] = deepcopy(grid["branchdc"]["1"])
+        grid["branchdc"]["$(n_branch_dc+i)"]["source_id"][2] = deepcopy(n_branch_dc+i)
+        grid["branchdc"]["$(n_branch_dc+i)"]["index"] = deepcopy(n_branch_dc+i)
+    end
+    grid["branchdc"]["3"]["r"] = 0.1
+    grid["branchdc"]["3"]["rateA"] = 20.0
+    grid["branchdc"]["3"]["rateB"] = 20.0
+    grid["branchdc"]["3"]["rateC"] = 20.0
+    grid["branchdc"]["3"]["fbusdc"] = 5
+    grid["branchdc"]["3"]["tbusdc"] = 6
+    grid["branchdc"]["3"]["HVDC_link"] = "EI -> DC Switchyard" 
+
+    # For later
+    #grid["branchdc"]["4"]["r"] = 0.1
+    #grid["branchdc"]["4"]["rateA"] = 14.0
+    #grid["branchdc"]["4"]["rateB"] = 14.0
+    #grid["branchdc"]["4"]["rateC"] = 14.0
+    #grid["branchdc"]["4"]["fbusdc"] = 6
+    #grid["branchdc"]["4"]["tbusdc"] = 7
+    #grid["branchdc"]["4"]["HVDC_link"] = "DC Switchyard -> UK" 
+
+    grid["branchdc"]["5"]["r"] = 0.1
+    grid["branchdc"]["5"]["rateA"] = 20.0
+    grid["branchdc"]["5"]["rateB"] = 20.0
+    grid["branchdc"]["5"]["rateC"] = 20.0
+    grid["branchdc"]["5"]["fbusdc"] = 6
+    grid["branchdc"]["5"]["tbusdc"] = 8
+    grid["branchdc"]["5"]["HVDC_link"] = "DC Switchyard -> Gezelle" 
+
+end
