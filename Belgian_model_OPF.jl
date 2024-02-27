@@ -67,6 +67,30 @@ _PMACDC.process_additional_data!(example_dc_grid)
 s = Dict("output" => Dict("branch_flows" => true), "conv_losses_mp" => true)
 result = _PMACDC.run_acdcopf(BE_grid,DCPPowerModel,gurobi; setting = s)
 
+result = _PMACDC.run_acdcopf(BE_grid,ACPPowerModel,ipopt; setting = s)
+
+
+
+BE_grid["branchdc"]["1"]["rateA"] = 10.0
+BE_grid["branchdc"]["2"]["rateA"] = 10.0
+
+
+json_string_data = JSON.json(BE_grid)
+folder_results = @__DIR__
+
+open(joinpath(folder_results,"test_cases/Belgian_transmission_grid_data_Elia_2023.json"),"w" ) do f
+write(f,json_string_data)
+end
+
+
+
+
+
+
+
+
+
+
 
 ##################################################################
 ## Choosing the number of hours, scenario and climate year

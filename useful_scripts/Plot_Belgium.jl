@@ -13,8 +13,7 @@ lat = [] # vector for the latitude of the buses
 lon = [] # vector for the longitude of the buses
 type = [] # to differentiate the bus type (AC or DC)
 count_ = 0
-for i in 1:132 # number of ac buses here
-    print(i,"\n")
+for i in eachindex(BE_data["bus"]) # number of ac buses here -> TO BE IMPROVED
     if haskey(BE_data["bus"]["$i"],"lat")
         push!(nodes,BE_data["bus"]["$i"]["index"])
         push!(lat,BE_data["bus"]["$i"]["lat"])
@@ -22,8 +21,7 @@ for i in 1:132 # number of ac buses here
         push!(type,0)
     end
 end    
-for i in 1:4 # number of dc buses here
-    print(i,"\n")
+for i in eachindex(BE_data["busdc"]) # number of dc buses here -> TO BE IMPROVED
     if haskey(BE_data["busdc"]["$i"],"lat")
         push!(nodes,BE_data["busdc"]["$i"]["index"])
         push!(lat,BE_data["busdc"]["$i"]["lat"])
@@ -43,7 +41,8 @@ rate_a = [] # rating of the line
 type_branch = [] # AC or DC
 overload = [] # this is the vector that allows to plot different overloading conditions for different branches in the grid 
 
-for i in 1:188 # number of AC branches
+for i in eachindex(BE_data["branch"]) # number of AC branches
+    print(i,"\n")
     push!(branches,BE_data["branch"]["$i"]["index"])
     push!(bus_fr_,BE_data["branch"]["$i"]["f_bus"])
     push!(bus_to_,BE_data["branch"]["$i"]["t_bus"])
@@ -57,7 +56,7 @@ for i in 1:188 # number of AC branches
     push!(type_branch,0)
     push!(overload,1.0)
 end
-for i in 1:2 # number of DC branches
+for i in eachindex(BE_data["branchdc"]) # number of DC branches
     push!(branches,BE_data["branchdc"]["$i"]["index"])
     push!(bus_fr_,BE_data["branchdc"]["$i"]["fbusdc"])
     push!(bus_to_,BE_data["branchdc"]["$i"]["tbusdc"])
