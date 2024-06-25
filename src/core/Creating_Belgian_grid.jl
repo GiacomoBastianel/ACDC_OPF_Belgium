@@ -1,7 +1,7 @@
 ### Script to create the Belgian Grid based on publicly available data
 ## The .json file is built in PowerModels format
 # Calling useful packages
-using XLSX
+using XLSXs
 using JSON
 using StringDistances
 using PowerModels; const _PM = PowerModels

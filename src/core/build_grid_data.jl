@@ -1061,16 +1061,53 @@ end
 function fix_hourly_loads_and_gen_interconnections(grid,hour) # -> doing nothing
     for (l_id,l) in grid["load"]
         if l["zone"] == "UK00" 
-            l["pmax"] = deepcopy(flow_BE_UK[hour]/100) #pu
-            l["pd"] = deepcopy(flow_BE_UK[hour]/100) #pu
+            l["pmax"] = deepcopy(load_UK[hour]/100) #pu
+            l["pd"] = deepcopy(load_UK[hour]/100) #pu
         elseif l["zone"] == "DE00"
-            l["pd"] = flow_BE_DE[hour]/100 #pu
+            l["pd"] = 0#flow_BE_DE[hour]/100 #pu
         elseif l["zone"] == "LU00"
-            l["pd"] = flow_BE_LU[hour]/100 #pu
+            l["pd"] = 0#flow_BE_LU[hour]/100 #pu
         elseif l["zone"] == "NL00"
-            l["pd"] = flow_BE_NL[hour]/100 #pu          
+            l["pd"] = 0#flow_BE_NL[hour]/100 #pu          
         elseif l["zone"] == "FR00"
-            l["pd"] = flow_BE_FR[hour]/100 #pu            
+            l["pd"] = 0#flow_BE_FR[hour]/100 #pu            
+        end
+    end
+    
+    #for (l_id,l) in grid["gen"]
+    #    if l["zone"] == "UK00" && l["type"] != "VOLL"
+    #        print(l_id,"\n")
+    #        l["pmax"] = deepcopy(flow_UK_BE[hour]/100) #pu
+    #        #l["pmin"] = deepcopy(l["pmax"])
+    #    elseif l["zone"] == "DE00"
+    #        l["pmax"] = deepcopy(flow_DE_BE[hour]/100) #pu
+    #        #l["pmin"] = deepcopy(l["pmax"])
+    #    elseif l["zone"] == "LU00"
+    #        l["pmax"] = deepcopy(flow_LU_BE[hour]/100) #pu
+    #        #l["pmin"] = deepcopy(l["pmax"])
+    #    elseif l["zone"] == "NL00"
+    #        l["pmax"] = flow_NL_BE[hour]/100 #pu
+    #        #l["pmin"] = deepcopy(l["pmax"])     
+    #    elseif l["zone"] == "FR00"
+    #        l["pmax"] = flow_FR_BE[hour]/100 #pu
+    #        #l["pmin"] = deepcopy(l["pmax"])     
+    #    end 
+    #end    
+end
+
+function fix_hourly_loads_and_gen_interconnections_UK(grid,hour,load_UK) # -> doing nothing
+    for (l_id,l) in grid["load"]
+        if l["zone"] == "UK00" 
+            l["pmax"] = deepcopy(load_UK[hour]/100) #pu
+            l["pd"] = deepcopy(load_UK[hour]/100) #pu
+        elseif l["zone"] == "DE00"
+            l["pd"] = 0#flow_BE_DE[hour]/100 #pu
+        elseif l["zone"] == "LU00"
+            l["pd"] = 0#flow_BE_LU[hour]/100 #pu
+        elseif l["zone"] == "NL00"
+            l["pd"] = 0#flow_BE_NL[hour]/100 #pu          
+        elseif l["zone"] == "FR00"
+            l["pd"] = 0#flow_BE_FR[hour]/100 #pu            
         end
     end
     
@@ -1115,7 +1152,7 @@ function hourly_opf_BE(grid,number_of_hours,load_series_BE,wind_onshore, wind_of
         #fix_load_BE(hourly_grid,load_series_BE,hour)
         for (l_id,l) in hourly_grid["load"]
             if !haskey(l,"neighbouring")
-                l["pd"] = load_BE[hour]*l["power_portion"]/100 #pu
+                l["pd"] = load_series_BE[hour]*l["power_portion"]/100 #pu
             end 
         end
         fix_hourly_loads_and_gen_interconnections(hourly_grid,hour)
@@ -1125,6 +1162,26 @@ function hourly_opf_BE(grid,number_of_hours,load_series_BE,wind_onshore, wind_of
         grid_hour["$hour"] = deepcopy(hourly_grid)
     end
     return results#, grid_hour
+end
+
+function hourly_opf_BE_UK(grid, type, optimizer, number_of_hours,load_series_BE,load_series_UK,wind_onshore, wind_offshore, solar_pv)
+    results = Dict()
+    grid_hour = Dict()
+    for hour in 1:number_of_hours
+        hourly_grid = deepcopy(grid)
+        #fix_load_BE(hourly_grid,load_series_BE,hour)
+        for (l_id,l) in hourly_grid["load"]
+            if !haskey(l,"neighbouring")
+                l["pd"] = load_series_BE[hour]*l["power_portion"]/100 #pu
+            end 
+        end
+        fix_hourly_loads_and_gen_interconnections_UK(hourly_grid,hour,load_series_UK)
+        fix_RES_time_series(hourly_grid,hour,wind_onshore, wind_offshore, solar_pv)
+        hourly_results = deepcopy(_PMACDC.run_acdcopf(hourly_grid, type, optimizer; setting = s))
+        results["$hour"] = deepcopy(hourly_results)
+        grid_hour["$hour"] = deepcopy(hourly_grid)
+    end
+    return results
 end
 
 function hourly_opf_BE_no_interconnections(grid,number_of_hours,load_series_BE,wind_onshore, wind_offshore, solar_pv)
@@ -1146,6 +1203,26 @@ function hourly_opf_BE_no_interconnections(grid,number_of_hours,load_series_BE,w
     end
     return results, grid_hour
 end
+
+function hourly_opf_BE_UK_switch(grid, type, optimizer, number_of_hours,load_series_BE,load_series_UK,wind_onshore, wind_offshore, solar_pv)
+    results = Dict()
+    grid_hour = Dict()
+    for hour in 1:number_of_hours
+        hourly_grid = deepcopy(grid)
+        for (l_id,l) in hourly_grid["load"]
+            if !haskey(l,"neighbouring")
+                l["pd"] = load_series_BE[hour]*l["power_portion"]/100 #pu
+            end 
+        end
+        fix_hourly_loads_and_gen_interconnections_UK(hourly_grid,hour,load_series_UK)
+        fix_RES_time_series(hourly_grid,hour,wind_onshore, wind_offshore, solar_pv)
+        hourly_results = run_acdc_AC_switch(hourly_grid,type, optimizer; setting = s)
+        results["$hour"] = deepcopy(hourly_results)
+        grid_hour["$hour"] = deepcopy(hourly_grid)
+    end
+    return results#, grid_hour
+end
+
 
 function create_ventilus(grid)
     # Adding Ventilus
@@ -1432,6 +1509,7 @@ function add_energy_island(grid)
     grid["busdc"]["5"]["name"] = "EI_DC_1_525"
     grid["busdc"]["5"]["name_no_kV"] = "EI_DC_1"
     grid["busdc"]["5"]["zone"] = "BE01"
+    grid["busdc"]["5"]["bus_name"] = "EI"
     grid["busdc"]["5"]["basekVdc"] = 525
 
     # Add Energy island #2 DC bus (DC switchyard)
@@ -1446,6 +1524,7 @@ function add_energy_island(grid)
     grid["busdc"]["6"]["name"] = "EI_DC_1_525"
     grid["busdc"]["6"]["name_no_kV"] = "EI_DC_1"
     grid["busdc"]["6"]["zone"] = "BE01"
+    grid["busdc"]["6"]["bus_name"] = "EI_DC_switchyard"
     grid["busdc"]["6"]["basekVdc"] = 525
 
     # Add UK #2 DC bus 
@@ -1460,8 +1539,9 @@ function add_energy_island(grid)
     grid["busdc"]["7"]["name"] = "UK_EI_DC_2_525"
     grid["busdc"]["7"]["name_no_kV"] = "UK_EI_DC_2"
     grid["busdc"]["7"]["zone"] = "BE01"
+    grid["busdc"]["7"]["bus_name"] = "EI_UK_Onshore"
     grid["busdc"]["7"]["basekVdc"] = 525
-
+ 
     # Add Gezelle DC bus
     grid["busdc"]["8"] = deepcopy(grid["busdc"]["1"])
     grid["busdc"]["8"]["busdc_i"] = 8
@@ -1474,6 +1554,7 @@ function add_energy_island(grid)
     grid["busdc"]["8"]["name"] = "GEZEL_EI_DC_1_525"
     grid["busdc"]["8"]["name_no_kV"] = "GEZEL_EI_DC_1"
     grid["busdc"]["8"]["zone"] = "BE01"
+    grid["busdc"]["8"]["bus_name"] = "EI_BE_Onshore"
     grid["busdc"]["8"]["basekVdc"] = 525
 
     # Adding 3 converters for the energy island
@@ -1714,18 +1795,18 @@ function add_energy_island_synthetic_network(grid)
     grid["busdc"]["6"]["basekVdc"] = 525
 
     # Add UK #2 DC bus -> for later
-    #grid["busdc"]["7"] = deepcopy(grid["busdc"]["1"])
-    #grid["busdc"]["7"]["busdc_i"] = 7
-    #grid["busdc"]["7"]["source_id"][2] = 7
-    #grid["busdc"]["7"]["index"] = 7
-    #grid["busdc"]["7"]["lat"] = 51.888354
-    #grid["busdc"]["7"]["lon"] = 1.209372
-    #grid["busdc"]["7"]["full_name"] = "UK_EI_DC_2"
-    #grid["busdc"]["7"]["full_name_kV"] = "UK_EI_DC_2_525"
-    #grid["busdc"]["7"]["name"] = "UK_EI_DC_2_525"
-    #grid["busdc"]["7"]["name_no_kV"] = "UK_EI_DC_2"
-    #grid["busdc"]["7"]["zone"] = "BE01"
-    #grid["busdc"]["7"]["basekVdc"] = 525
+    grid["busdc"]["7"] = deepcopy(grid["busdc"]["1"])
+    grid["busdc"]["7"]["busdc_i"] = 7
+    grid["busdc"]["7"]["source_id"][2] = 7
+    grid["busdc"]["7"]["index"] = 7
+    grid["busdc"]["7"]["lat"] = 51.888354
+    grid["busdc"]["7"]["lon"] = 1.209372
+    grid["busdc"]["7"]["full_name"] = "UK_EI_DC_2"
+    grid["busdc"]["7"]["full_name_kV"] = "UK_EI_DC_2_525"
+    grid["busdc"]["7"]["name"] = "UK_EI_DC_2_525"
+    grid["busdc"]["7"]["name_no_kV"] = "UK_EI_DC_2"
+    grid["busdc"]["7"]["zone"] = "BE01"
+    grid["busdc"]["7"]["basekVdc"] = 525
 
     # Add Gezelle DC bus
     grid["busdc"]["8"] = deepcopy(grid["busdc"]["1"])
@@ -1757,11 +1838,11 @@ function add_energy_island_synthetic_network(grid)
     grid["convdc"]["5"]["Pacrated"] = 20.0
 
     # For later
-    #grid["convdc"]["6"]["busdc_i"] = 7
-    #grid["convdc"]["6"]["busac_i"] = 128
-    #grid["convdc"]["6"]["Pacmax"] = 14.0
-    #grid["convdc"]["6"]["Pacmin"] = - 14.0
-    #grid["convdc"]["6"]["Pacrated"] = 14.0
+    grid["convdc"]["6"]["busdc_i"] = 7
+    grid["convdc"]["6"]["busac_i"] = 128
+    grid["convdc"]["6"]["Pacmax"] = 14.0
+    grid["convdc"]["6"]["Pacmin"] = - 14.0
+    grid["convdc"]["6"]["Pacrated"] = 14.0
 
     grid["convdc"]["7"]["busdc_i"] = 8
     grid["convdc"]["7"]["busac_i"] = 26
@@ -1784,14 +1865,13 @@ function add_energy_island_synthetic_network(grid)
     grid["branchdc"]["3"]["tbusdc"] = 6
     grid["branchdc"]["3"]["HVDC_link"] = "EI -> DC Switchyard" 
 
-    # For later
-    #grid["branchdc"]["4"]["r"] = 0.1
-    #grid["branchdc"]["4"]["rateA"] = 14.0
-    #grid["branchdc"]["4"]["rateB"] = 14.0
-    #grid["branchdc"]["4"]["rateC"] = 14.0
-    #grid["branchdc"]["4"]["fbusdc"] = 6
-    #grid["branchdc"]["4"]["tbusdc"] = 7
-    #grid["branchdc"]["4"]["HVDC_link"] = "DC Switchyard -> UK" 
+    grid["branchdc"]["4"]["r"] = 0.1
+    grid["branchdc"]["4"]["rateA"] = 14.0
+    grid["branchdc"]["4"]["rateB"] = 14.0
+    grid["branchdc"]["4"]["rateC"] = 14.0
+    grid["branchdc"]["4"]["fbusdc"] = 6
+    grid["branchdc"]["4"]["tbusdc"] = 7
+    grid["branchdc"]["4"]["HVDC_link"] = "DC Switchyard -> UK" 
 
     grid["branchdc"]["5"]["r"] = 0.1
     grid["branchdc"]["5"]["rateA"] = 20.0
@@ -1801,4 +1881,22 @@ function add_energy_island_synthetic_network(grid)
     grid["branchdc"]["5"]["tbusdc"] = 8
     grid["branchdc"]["5"]["HVDC_link"] = "DC Switchyard -> Gezelle" 
 
+end
+
+function add_switch(data,ac_bus_from,ac_bus_to,pmax)
+    n_switch = deepcopy(length(data["switch"]))
+    switch_id = n_switch + 1
+    data["switch"]["$switch_id"] = Dict{String,Any}()
+    data["switch"]["$switch_id"]["f_bus"] = deepcopy(ac_bus_from) # assigning from and to bus to each switch. One switch for each key in the extremes_ZIL
+    data["switch"]["$switch_id"]["t_bus"] = deepcopy(ac_bus_to)
+    data["switch"]["$switch_id"]["index"] = switch_id
+    data["switch"]["$switch_id"]["psw"] = pmax # assuming a maximum active power for the switch
+    data["switch"]["$switch_id"]["qsw"] = pmax/2 # assuming a maximum reactive power for the switch
+    data["switch"]["$switch_id"]["thermal_rating"] = sqrt(pmax^2+(pmax/2)^2) 
+    data["switch"]["$switch_id"]["status"] = 1
+    data["switch"]["$switch_id"]["source_id"] = []
+    push!(data["switch"]["$switch_id"]["source_id"],"switch")
+    push!(data["switch"]["$switch_id"]["source_id"],switch_id)
+    data["switch"]["$switch_id"]["ZIL"] = true
+    data["switch"]["$switch_id"]["maximum_angle"] = pi/6 # 30 degrees
 end
