@@ -112,11 +112,6 @@ for (g_id,g) in BE_grid_energy_island["gen"]
 end
 
 
-BE_grid_energy_island_switch = deepcopy(BE_grid_energy_island)
-delete!(BE_grid_energy_island_switch["branch"],"195")
-add_switch(BE_grid_energy_island_switch,133,134,30.0)
-
-
 # Running the OPF for the base case
 number_of_hours = 24
 s = Dict("output" => Dict("branch_flows" => true), "conv_losses_mp" => true)
@@ -125,8 +120,12 @@ results = hourly_opf_BE(BE_grid_energy_island,number_of_hours,load_BE,wind_onsho
 results_uk_dc = hourly_opf_BE_UK(BE_grid_energy_island,DCPPowerModel,gurobi,number_of_hours,load_BE,load_UK,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
 results_uk_ac = hourly_opf_BE_UK(BE_grid_energy_island,ACPPowerModel,ipopt,number_of_hours,load_BE,load_UK,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
 
-results_uk_dc_sw = hourly_opf_BE_UK_switch(BE_grid_energy_island_switch,DCPPowerModel,gurobiC,number_of_hours,load_BE,load_UK,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
-results_uk_ac_sw = hourly_opf_BE_UK_switch(BE_grid_energy_island_switch,ACPPowerModel,juniper,number_of_hours,load_BE,load_UK,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
+#BE_grid_energy_island_switch = deepcopy(BE_grid_energy_island)
+#delete!(BE_grid_energy_island_switch["branch"],"195")
+#add_switch(BE_grid_energy_island_switch,133,134,30.0)
+
+#results_uk_dc_sw = hourly_opf_BE_UK_switch(BE_grid_energy_island_switch,DCPPowerModel,gurobiC,number_of_hours,load_BE,load_UK,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
+#results_uk_ac_sw = hourly_opf_BE_UK_switch(BE_grid_energy_island_switch,ACPPowerModel,juniper,number_of_hours,load_BE,load_UK,wind_onshore_BE, wind_offshore_BE, solar_pv_BE)
 
 
 for i in 1:number_of_hours
