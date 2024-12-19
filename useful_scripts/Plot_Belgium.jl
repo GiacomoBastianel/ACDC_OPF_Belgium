@@ -6,7 +6,6 @@ using DataFrames
 ##############################################
 BE_data = deepcopy(BE_grid)
 ##############################################
-file_pdf = "BE_grid_fixing.pdf"
 
 nodes = [] # vector for the buses
 lat = [] # vector for the latitude of the buses
@@ -126,6 +125,8 @@ for row in eachrow(map_) if (row[:type]==1)]
 #combine plot data                
 trace=vcat(traceAC,trace_AC,traceDC,trace_DC)
 
+trace_ac_fig=vcat(traceAC,trace_AC)
+
  
 #set map location
 geo = PlotlyJS.attr(scope="europe",fitbounds="locations",#lonaxis=attr(range=[40,58], showgrid=true),
@@ -139,10 +140,23 @@ showlegend = false,
 margin=PlotlyJS.attr(l=0, r=0, t=0, b=0))
 #display plot
 
-folder_results = "/Users/giacomobastianel/Desktop/Results_Belgium/Figures"
+folder_figures = "/Users/giacomobastianel/.julia/dev/ACDC_OPF_Belgium/Figures"
 
-#display plot
-#PlotlyJS.plot(trace, layout)
-PlotlyJS.savefig(PlotlyJS.plot(trace, layout), joinpath(folder_results,file_pdf))
+file_pdf = "BE_grid_AC_DC.pdf"
+file_pdf_ac = "BE_grid_AC.pdf"
+
+file_svg = "BE_grid_AC_DC.svg"
+file_svg_ac = "BE_grid_AC.svg"
+
+file_png = "BE_grid_AC_DC.png"
+file_png_ac = "BE_grid_AC.png"
 
 
+PlotlyJS.savefig(PlotlyJS.plot(trace, layout), joinpath(folder_figures,file_pdf))
+PlotlyJS.savefig(PlotlyJS.plot(trace_ac_fig, layout), joinpath(folder_figures,file_pdf_ac))
+
+PlotlyJS.savefig(PlotlyJS.plot(trace, layout), joinpath(folder_figures,file_svg))
+PlotlyJS.savefig(PlotlyJS.plot(trace_ac_fig, layout), joinpath(folder_figures,file_svg_ac))
+
+PlotlyJS.savefig(PlotlyJS.plot(trace, layout), joinpath(folder_figures,file_png))
+PlotlyJS.savefig(PlotlyJS.plot(trace_ac_fig, layout), joinpath(folder_figures,file_png_ac))
